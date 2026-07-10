@@ -565,15 +565,26 @@
   function getSnz(b){ try{ var v=localStorage.getItem(snzKey(b)); return v?+v:0; }catch(e){ return 0; } }
   function setSnz(b,ts){ try{ if(ts) localStorage.setItem(snzKey(b),String(ts)); else localStorage.removeItem(snzKey(b)); }catch(e){} }
   // ---- historico (log append-only) ----
-  function logEvent(kind, block, detail){
+  var SNAP_KINDS = ["add","edit","del","import","restore","init"];
+  function scheduleSnapshot(){ return sortedBlocks().map(function(b){ return {id:b.id, time:b.time, period:b.period}; }); }
+  function logEvent(kind, block, detail, extra){
     try{
       var lg = load(STORE_HISTORY, []);
       if(!Array.isArray(lg)) lg = [];
-      lg.push({ t: Date.now(), k: kind, b: block?block.id:"", bt: block?block.time:"", p: block?block.period:"", d: detail||"" });
+      var ev = { t: Date.now(), k: kind, b: block?block.id:"", bt: block?block.time:"", p: block?block.period:"", d: detail||"" };
+      if(SNAP_KINDS.indexOf(kind)>=0) ev.s = scheduleSnapshot();   // retrato da agenda após a mudança
+      if(extra){ for(var kk in extra) ev[kk]=extra[kk]; }
+      lg.push(ev);
       if(lg.length > 4000) lg = lg.slice(lg.length-4000);
       save(STORE_HISTORY, lg);
     }catch(e){}
   }
+  function targetDateFor(b){ // dose noturna marcada de madrugada conta para o dia anterior
+    var d=new Date();
+    if(d.getHours()<4 && toMin(b.time)>=18){ d=new Date(d.getTime()-86400000); }
+    return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
+  }
+  function evDate(e){ return e.td || localDateStr(e.t); }
   function localDateStr(ts){ var d=new Date(ts); return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate()); }
   function clockStr(ts){ var d=new Date(ts); return pad(d.getHours())+":"+pad(d.getMinutes()); }
   function fmtBR(dayStr){ var p=dayStr.split("-"); return p[2]+"/"+p[1]+"/"+p[0]; }
@@ -819,7 +830,7 @@
         var done=st==="done"; btn.dataset.done=done?"true":"false"; btn.setAttribute("aria-label",btnLabel(b,done));
         btn.innerHTML=checkIcon()+"<span>"+btnText(b,done)+"</span>";
         btn.addEventListener("click",function(){ var nv=!isDone(b.id); setDone(b.id,nv);
-          logEvent(nv?"take":"untake", b);
+          logEvent(nv?"take":"untake", b, "", {td: targetDateFor(b)});
           if(nv && activeAlarmBlock && activeAlarmBlock.id===b.id) closeAlarm();
           var n2=nowMin(); lastBlocksSig=null; renderBlocks(n2); renderHero(n2); renderProgress();
           announce(nv?"Bloco das "+b.time+" marcado como dado.":"Bloco das "+b.time+" desmarcado."); });
@@ -927,7 +938,7 @@
       if(!meds.length){ toast("Adicione ao menos 1 medicamento."); return; }
       b.itens=meds;
       if(isNew){ SCHEDULE.blocks.push(b); logEvent("add", b, "Adicionou "+b.time+" ("+b.period+"), "+b.itens.length+" item(ns)"); }
-      else { var idx=SCHEDULE.blocks.findIndex(function(x){return x.id===id;}); var orig=SCHEDULE.blocks[idx]; logEvent("edit", b, diffSummary(orig, b)); SCHEDULE.blocks[idx]=b; }
+      else { var idx=SCHEDULE.blocks.findIndex(function(x){return x.id===id;}); var orig=SCHEDULE.blocks[idx]; var det=diffSummary(orig, b); SCHEDULE.blocks[idx]=b; logEvent("edit", b, det); }
       persistSchedule(); lastBlocksSig=null; lastMetaSig=null; renderStatic(); fullRender(); closeModal();
       toast(isNew?"Horário adicionado.":"Horário atualizado."); announce("Alterações salvas.");
     });
@@ -941,7 +952,7 @@
     var actions=el("div","modal-actions");
     var del=el("button","btn btn-danger","Apagar"); del.type="button";
     var cancel=el("button","btn btn-ghost","Cancelar"); cancel.type="button"; cancel.addEventListener("click",closeModal);
-    del.addEventListener("click",function(){ logEvent("del", b, "Apagou "+b.time+" ("+b.period+")"); SCHEDULE.blocks=SCHEDULE.blocks.filter(function(x){return x.id!==id;}); persistSchedule();
+    del.addEventListener("click",function(){ var det="Apagou "+b.time+" ("+b.period+")"; SCHEDULE.blocks=SCHEDULE.blocks.filter(function(x){return x.id!==id;}); persistSchedule(); logEvent("del", b, det);
       lastBlocksSig=null; lastMetaSig=null; renderStatic(); fullRender(); closeModal(); toast("Horário apagado."); });
     actions.appendChild(del); actions.appendChild(cancel); c.appendChild(actions);
     openModal("Apagar horário", c);
@@ -979,9 +990,9 @@
     c.appendChild(prev);
     var repBtns=el("div","modal-actions");
     var htmlBtn=el("button","btn btn-primary","Baixar relatório"); htmlBtn.type="button";
-    htmlBtn.addEventListener("click",function(){ var f=inFrom.value,t=inTo.value; if(!f||!t||f>t){ toast("Período inválido."); return; } var rep=computeReport(f,t); downloadBlob(buildReportHTML(rep,f,t),"relatorio-remedios-"+f+"_a_"+t+".html","text/html;charset=utf-8"); toast("Relatório baixado. Abra para ver ou imprimir em PDF."); });
+    htmlBtn.addEventListener("click",function(){ var f=inFrom.value,t=inTo.value; if(!f||!t||f>t){ toast("Período inválido."); return; } var rep=computeReport(f,t); downloadBlob(buildReportHTML(rep,f,t),"relatorio-remedios-"+f+"_a_"+t+".html","text/html;charset=utf-8"); toast(isIOS()?"Relatório pronto — toque em Salvar em Arquivos.":"Relatório pronto. Abra para ver ou imprimir em PDF."); });
     var csvBtn=el("button","btn btn-ghost","Baixar CSV"); csvBtn.type="button";
-    csvBtn.addEventListener("click",function(){ var f=inFrom.value,t=inTo.value; if(!f||!t||f>t){ toast("Período inválido."); return; } var rep=computeReport(f,t); downloadBlob("﻿"+buildReportCSV(rep),"relatorio-remedios-"+f+"_a_"+t+".csv","text/csv;charset=utf-8"); toast("CSV baixado (abre no Excel)."); });
+    csvBtn.addEventListener("click",function(){ var f=inFrom.value,t=inTo.value; if(!f||!t||f>t){ toast("Período inválido."); return; } var rep=computeReport(f,t); downloadBlob("﻿"+buildReportCSV(rep),"relatorio-remedios-"+f+"_a_"+t+".csv","text/csv;charset=utf-8"); toast(isIOS()?"CSV pronto — toque em Salvar em Arquivos.":"CSV pronto (abre no Excel)."); });
     repBtns.appendChild(htmlBtn); repBtns.appendChild(csvBtn);
     c.appendChild(repBtns);
     updatePrev();
@@ -1077,10 +1088,18 @@
     L.push("END:VCALENDAR");
     return L.join("\r\n");
   }
+  function isIOS(){ try{ return /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform==="MacIntel" && navigator.maxTouchPoints>1); }catch(e){ return false; } }
   function downloadBlob(content, filename, type){
+    // iOS (inclusive PWA instalado na tela) ignora <a download>: usar a folha de compartilhar
+    try{
+      if(isIOS() && navigator.canShare){
+        var f=new File([content], filename, {type:type});
+        if(navigator.canShare({files:[f]})){ navigator.share({files:[f], title:filename}).catch(function(){}); return; }
+      }
+    }catch(e){}
     var blob=new Blob([content],{type:type}); var url=URL.createObjectURL(blob);
     var a=document.createElement("a"); a.href=url; a.download=filename; document.body.appendChild(a); a.click();
-    setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); },500);
+    setTimeout(function(){ try{ document.body.removeChild(a); }catch(e){} URL.revokeObjectURL(url); },600);
   }
   function downloadICS(){ downloadBlob(buildICS(),"remedios-pai.ics","text/calendar;charset=utf-8"); toast("Calendário baixado. Abra o arquivo pra importar."); }
 
@@ -1097,29 +1116,26 @@
   function statusPT(s){ return s==="tomado"?"Tomado":s==="nao-tomado"?"NÃO tomado":s==="pendente"?"Pendente":"Sem registro"; }
   function computeReport(fromStr, toStr){
     var lg = load(STORE_HISTORY, []); if(!Array.isArray(lg)) lg=[];
-    var firstUse = lg.length ? localDateStr(lg[0].t) : todayKey();
-    var today = todayKey(), nowM = nowMin();
-    var blocks = sortedBlocks();
+    // retratos da agenda ao longo do tempo (para saber o que existia em cada dia)
+    var snaps = lg.filter(function(e){ return e.s && e.s.length!==undefined; }).map(function(e){ return {date: localDateStr(e.t), s: e.s}; });
+    function scheduleOn(day){ var chosen=null; for(var i=0;i<snaps.length;i++){ if(snaps[i].date<=day) chosen=snaps[i].s; else break; } return chosen; }
+    var today = todayKey();
     var days = daysBetween(fromStr, toStr);
     var rows=[], tot={taken:0,missed:0,pending:0};
     days.forEach(function(day){
+      var sched = scheduleOn(day);   // agenda que valia NAQUELE dia (null se antes do acompanhamento)
       var dayBlocks=[];
-      blocks.forEach(function(b){
-        var status=null, takenAt=null;
-        var evs = lg.filter(function(e){ return (e.k==="take"||e.k==="untake") && e.b===b.id && localDateStr(e.t)===day; });
-        if(evs.length){ var last=evs[evs.length-1]; if(last.k==="take"){ status="tomado"; takenAt=clockStr(last.t); } }
-        if(!status){
-          if(day < firstUse) status="sem-registro";
-          else if(day < today) status="nao-tomado";
-          else if(day === today) status = (nowM > endMin(b)) ? "nao-tomado" : "pendente";
-          else status="pendente";
-        }
-        if(status==="tomado") tot.taken++;
-        else if(status==="nao-tomado") tot.missed++;
-        else if(status==="pendente") tot.pending++;
-        dayBlocks.push({time:b.time, period:b.period, status:status, takenAt:takenAt});
-      });
-      rows.push({date:day, blocks:dayBlocks});
+      if(sched){
+        sched.forEach(function(sb){
+          var status=null, takenAt=null;
+          var evs = lg.filter(function(e){ return (e.k==="take"||e.k==="untake") && e.b===sb.id && evDate(e)===day; });
+          if(evs.length){ var last=evs[evs.length-1]; if(last.k==="take"){ status="tomado"; takenAt=clockStr(last.t); } }
+          if(!status){ status = (day < today) ? "nao-tomado" : "pendente"; }  // hoje/futuro nunca é falta (dia não acabou)
+          if(status==="tomado") tot.taken++; else if(status==="nao-tomado") tot.missed++; else tot.pending++;
+          dayBlocks.push({time:sb.time, period:sb.period, status:status, takenAt:takenAt});
+        });
+      }
+      rows.push({date:day, blocks:dayBlocks, noSchedule: !sched});
     });
     var fromMs=new Date(fromStr+"T00:00:00").getTime(), toMs=new Date(toStr+"T23:59:59").getTime();
     var changes = lg.filter(function(e){ return ["add","edit","del","import","restore"].indexOf(e.k)>=0 && e.t>=fromMs && e.t<=toMs; });
@@ -1147,7 +1163,8 @@
     h+="</div>";
     rep.rows.forEach(function(day){
       h+="<div class='day'><h3>"+fmtBR(day.date)+"</h3>";
-      day.blocks.forEach(function(b){
+      if(day.noSchedule){ h+="<div class='row'><span class='pe'>Sem registro neste dia (antes do acompanhamento)</span></div>"; }
+      else day.blocks.forEach(function(b){
         var cls=b.status==="tomado"?"ok":b.status==="nao-tomado"?"no":"pe";
         var txt=statusPT(b.status)+(b.takenAt?(" às "+b.takenAt):"");
         h+="<div class='row'><span>"+b.time+" — "+esc(b.period)+"</span><span class='"+cls+"'>"+txt+"</span></div>";
@@ -1223,6 +1240,7 @@
   // ---------- wire ----------
   function init(){
     loadSchedule();
+    (function ensureBaseline(){ var lg=load(STORE_HISTORY,[]); if(!Array.isArray(lg)||!lg.some(function(e){return e.s;})) logEvent("init", null, "Início do acompanhamento"); })();
     ALARM=load(STORE_ALARM,{enabled:false,sound:"sino",vibrate:true,snoozeMin:10});
     if(!ALARM.sound) ALARM.sound="sino";
     initTheme(); refreshAlarmBtn();
@@ -1233,7 +1251,7 @@
     document.getElementById("btn-alarms").addEventListener("click",function(){ if(ALARM.enabled){ openTools(); } else { enableAlarms(); } });
     document.getElementById("add-block").addEventListener("click",function(){ openBlockEditor(null); });
 
-    document.getElementById("alarm-taken").addEventListener("click",function(){ if(activeAlarmBlock){ var b=activeAlarmBlock; setDone(b.id,true); setAck(b); logEvent("take", b); closeAlarm(); lastBlocksSig=null; fullRender(); toast("Marcado como dado."); } });
+    document.getElementById("alarm-taken").addEventListener("click",function(){ if(activeAlarmBlock){ var b=activeAlarmBlock; setDone(b.id,true); setAck(b); logEvent("take", b, "", {td: targetDateFor(b)}); closeAlarm(); lastBlocksSig=null; fullRender(); toast("Marcado como dado."); } });
     document.getElementById("alarm-snooze").addEventListener("click",function(){ if(activeAlarmBlock){ var b=activeAlarmBlock; setSnz(b, Date.now()+(ALARM.snoozeMin||10)*60000); closeAlarm(); toast("Soneca de "+(ALARM.snoozeMin||10)+" min."); } });
     document.getElementById("alarm-stop").addEventListener("click",function(){ if(activeAlarmBlock){ setAck(activeAlarmBlock); } closeAlarm(); });
     document.getElementById("alarm-overlay").addEventListener("keydown",function(e){
