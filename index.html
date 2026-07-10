@@ -491,6 +491,7 @@
   var STORE_SCHEDULE = "remedios-schedule-v2";
   var STORE_THEME = "remedios-theme";
   var STORE_ALARM = "remedios-alarm-settings";
+  var STORE_HISTORY = "remedios-history";
 
   var ICON_KEYS = ["dawn","morning","afternoon","dusk","night"];
   var ICON_NAMES = {dawn:"Nascer do sol",morning:"Sol / manhã",afternoon:"Prato / almoço",dusk:"Pôr do sol",night:"Lua / noite"};
@@ -563,6 +564,28 @@
   function snzKey(b){ return "remedios-snz-"+todayKey()+"-"+b.id+"-"+b.time; }
   function getSnz(b){ try{ var v=localStorage.getItem(snzKey(b)); return v?+v:0; }catch(e){ return 0; } }
   function setSnz(b,ts){ try{ if(ts) localStorage.setItem(snzKey(b),String(ts)); else localStorage.removeItem(snzKey(b)); }catch(e){} }
+  // ---- historico (log append-only) ----
+  function logEvent(kind, block, detail){
+    try{
+      var lg = load(STORE_HISTORY, []);
+      if(!Array.isArray(lg)) lg = [];
+      lg.push({ t: Date.now(), k: kind, b: block?block.id:"", bt: block?block.time:"", p: block?block.period:"", d: detail||"" });
+      if(lg.length > 4000) lg = lg.slice(lg.length-4000);
+      save(STORE_HISTORY, lg);
+    }catch(e){}
+  }
+  function localDateStr(ts){ var d=new Date(ts); return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate()); }
+  function clockStr(ts){ var d=new Date(ts); return pad(d.getHours())+":"+pad(d.getMinutes()); }
+  function fmtBR(dayStr){ var p=dayStr.split("-"); return p[2]+"/"+p[1]+"/"+p[0]; }
+  function diffSummary(orig, nw){
+    var parts=[];
+    if(orig.time!==nw.time) parts.push("horário "+orig.time+"→"+nw.time);
+    if(orig.period!==nw.period) parts.push('nome "'+orig.period+'"→"'+nw.period+'"');
+    if((orig.itens||[]).length!==(nw.itens||[]).length) parts.push("itens "+(orig.itens||[]).length+"→"+(nw.itens||[]).length);
+    else if(JSON.stringify(orig.itens)!==JSON.stringify(nw.itens)) parts.push("medicamentos alterados");
+    if(orig.alimento!==nw.alimento) parts.push("alimento alterado");
+    return "Editou "+nw.time+" ("+nw.period+"): "+(parts.join("; ")||"sem mudanças");
+  }
   function endMin(b){ return b.windowEnd?toMin(b.windowEnd):Math.min(toMin(b.time)+90, 24*60-1); }
   function statusOf(b,n){ if(isDone(b.id))return"done"; if(n<toMin(b.time))return"upcoming"; if(n<=endMin(b))return"current"; return"late"; }
   function minutesLabel(m){ var h=Math.floor(m/60),mm=m%60; if(h<=0)return mm+" min"; return h+"h"+(mm>0?pad(mm)+"min":""); }
@@ -796,6 +819,7 @@
         var done=st==="done"; btn.dataset.done=done?"true":"false"; btn.setAttribute("aria-label",btnLabel(b,done));
         btn.innerHTML=checkIcon()+"<span>"+btnText(b,done)+"</span>";
         btn.addEventListener("click",function(){ var nv=!isDone(b.id); setDone(b.id,nv);
+          logEvent(nv?"take":"untake", b);
           if(nv && activeAlarmBlock && activeAlarmBlock.id===b.id) closeAlarm();
           var n2=nowMin(); lastBlocksSig=null; renderBlocks(n2); renderHero(n2); renderProgress();
           announce(nv?"Bloco das "+b.time+" marcado como dado.":"Bloco das "+b.time+" desmarcado."); });
@@ -902,7 +926,8 @@
       });
       if(!meds.length){ toast("Adicione ao menos 1 medicamento."); return; }
       b.itens=meds;
-      if(isNew){ SCHEDULE.blocks.push(b); } else { var idx=SCHEDULE.blocks.findIndex(function(x){return x.id===id;}); SCHEDULE.blocks[idx]=b; }
+      if(isNew){ SCHEDULE.blocks.push(b); logEvent("add", b, "Adicionou "+b.time+" ("+b.period+"), "+b.itens.length+" item(ns)"); }
+      else { var idx=SCHEDULE.blocks.findIndex(function(x){return x.id===id;}); var orig=SCHEDULE.blocks[idx]; logEvent("edit", b, diffSummary(orig, b)); SCHEDULE.blocks[idx]=b; }
       persistSchedule(); lastBlocksSig=null; lastMetaSig=null; renderStatic(); fullRender(); closeModal();
       toast(isNew?"Horário adicionado.":"Horário atualizado."); announce("Alterações salvas.");
     });
@@ -916,7 +941,7 @@
     var actions=el("div","modal-actions");
     var del=el("button","btn btn-danger","Apagar"); del.type="button";
     var cancel=el("button","btn btn-ghost","Cancelar"); cancel.type="button"; cancel.addEventListener("click",closeModal);
-    del.addEventListener("click",function(){ SCHEDULE.blocks=SCHEDULE.blocks.filter(function(x){return x.id!==id;}); persistSchedule();
+    del.addEventListener("click",function(){ logEvent("del", b, "Apagou "+b.time+" ("+b.period+")"); SCHEDULE.blocks=SCHEDULE.blocks.filter(function(x){return x.id!==id;}); persistSchedule();
       lastBlocksSig=null; lastMetaSig=null; renderStatic(); fullRender(); closeModal(); toast("Horário apagado."); });
     actions.appendChild(del); actions.appendChild(cancel); c.appendChild(actions);
     openModal("Apagar horário", c);
@@ -925,6 +950,43 @@
   // ---------- TOOLS modal ----------
   function openTools(){
     var c=el("div");
+
+    // ----- Relatorio e historico -----
+    c.appendChild(el("div","field","<label>Relatório e histórico</label>"));
+    c.appendChild(el("p","helper","Escolha o período. O relatório mostra, dia a dia, o que foi tomado, o que não foi, e as alterações feitas na lista."));
+    function ds(d){ return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate()); }
+    var today=new Date();
+    var toStr=ds(today), fromStr=ds(new Date(today.getTime()-6*86400000));
+    var rng=el("div","field");
+    rng.innerHTML='<div class="row2"><div><label>De</label><input type="date" id="rep-from" value="'+fromStr+'"></div><div><label>Até</label><input type="date" id="rep-to" value="'+toStr+'"></div></div>';
+    c.appendChild(rng);
+    var inFrom=rng.querySelector("#rep-from"), inTo=rng.querySelector("#rep-to");
+    var prev=el("p","helper"); prev.style.fontWeight="600"; prev.style.color="var(--ink)";
+    function updatePrev(){
+      var f=inFrom.value, t=inTo.value;
+      if(!f||!t||f>t){ prev.textContent="Selecione um período válido (De ≤ Até)."; return; }
+      var rep=computeReport(f,t), x=rep.totals, denom=x.taken+x.missed, pct=denom?Math.round(x.taken/denom*100):null;
+      prev.textContent=(pct!==null?("Adesão "+pct+"% — "):"")+x.taken+" tomadas, "+x.missed+" não tomadas"+(x.pending?(", "+x.pending+" pendentes"):"")+(rep.changes.length?(" · "+rep.changes.length+" alteração(ões)"):"");
+    }
+    var quick=el("div","times-chips");
+    [["7 dias",6],["30 dias",29],["Este mês","m"]].forEach(function(q){
+      var bq=el("button","tool-btn",q[0]); bq.type="button";
+      bq.addEventListener("click",function(){ var t=new Date(), f; if(q[1]==="m"){ f=new Date(t.getFullYear(),t.getMonth(),1); } else { f=new Date(t.getTime()-q[1]*86400000); } inFrom.value=ds(f); inTo.value=ds(t); updatePrev(); });
+      quick.appendChild(bq);
+    });
+    c.appendChild(quick);
+    inFrom.addEventListener("change",updatePrev); inTo.addEventListener("change",updatePrev);
+    c.appendChild(prev);
+    var repBtns=el("div","modal-actions");
+    var htmlBtn=el("button","btn btn-primary","Baixar relatório"); htmlBtn.type="button";
+    htmlBtn.addEventListener("click",function(){ var f=inFrom.value,t=inTo.value; if(!f||!t||f>t){ toast("Período inválido."); return; } var rep=computeReport(f,t); downloadBlob(buildReportHTML(rep,f,t),"relatorio-remedios-"+f+"_a_"+t+".html","text/html;charset=utf-8"); toast("Relatório baixado. Abra para ver ou imprimir em PDF."); });
+    var csvBtn=el("button","btn btn-ghost","Baixar CSV"); csvBtn.type="button";
+    csvBtn.addEventListener("click",function(){ var f=inFrom.value,t=inTo.value; if(!f||!t||f>t){ toast("Período inválido."); return; } var rep=computeReport(f,t); downloadBlob("﻿"+buildReportCSV(rep),"relatorio-remedios-"+f+"_a_"+t+".csv","text/csv;charset=utf-8"); toast("CSV baixado (abre no Excel)."); });
+    repBtns.appendChild(htmlBtn); repBtns.appendChild(csvBtn);
+    c.appendChild(repBtns);
+    updatePrev();
+    var hr0=document.createElement("hr"); hr0.style.cssText="border:none;border-top:1px solid var(--line);margin:1.1rem 0;"; c.appendChild(hr0);
+
     // alarm settings
     c.appendChild(el("div","field","<label>Som do alarme (gerado, funciona offline)</label>"));
     var radios=el("div","radio-list");
@@ -972,11 +1034,11 @@
     brow.appendChild(exp); brow.appendChild(imp); c.appendChild(brow);
 
     var reset=el("button","btn btn-ghost","Restaurar lista original"); reset.type="button"; reset.style.marginTop="0.6rem"; reset.style.width="100%";
-    reset.addEventListener("click",function(){ if(confirm("Restaurar a lista de exemplo? Suas edições serão perdidas.")){ SCHEDULE=seedSchedule(); persistSchedule(); lastBlocksSig=null; lastMetaSig=null; renderStatic(); fullRender(); closeModal(); toast("Lista original restaurada."); } });
+    reset.addEventListener("click",function(){ if(confirm("Restaurar a lista de exemplo? Suas edições serão perdidas.")){ SCHEDULE=seedSchedule(); persistSchedule(); logEvent("restore", null, "Restaurou a lista de exemplo"); lastBlocksSig=null; lastMetaSig=null; renderStatic(); fullRender(); closeModal(); toast("Lista original restaurada."); } });
     c.appendChild(reset);
 
     var closeb=el("div","modal-actions"); var cb=el("button","btn btn-primary","Fechar"); cb.type="button"; cb.addEventListener("click",closeModal); closeb.appendChild(cb); c.appendChild(closeb);
-    openModal("Alarmes, calendário e backup", c);
+    openModal("Relatórios, alarmes e mais", c);
   }
   function step(n,html){ var s=el("div","step"); s.innerHTML='<span class="step-n">'+n+'</span><span>'+html+'</span>'; return s; }
 
@@ -1022,13 +1084,101 @@
   }
   function downloadICS(){ downloadBlob(buildICS(),"remedios-pai.ics","text/calendar;charset=utf-8"); toast("Calendário baixado. Abra o arquivo pra importar."); }
 
+  // ---------- RELATORIO / HISTORICO ----------
+  function daysBetween(fromStr, toStr){
+    var out=[]; var f=new Date(fromStr+"T00:00:00"), t=new Date(toStr+"T00:00:00");
+    if(isNaN(f)||isNaN(t)||f>t) return out;
+    var guard=0;
+    for(var d=new Date(f); d<=t && guard<1000; d.setDate(d.getDate()+1), guard++){
+      out.push(d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate()));
+    }
+    return out;
+  }
+  function statusPT(s){ return s==="tomado"?"Tomado":s==="nao-tomado"?"NÃO tomado":s==="pendente"?"Pendente":"Sem registro"; }
+  function computeReport(fromStr, toStr){
+    var lg = load(STORE_HISTORY, []); if(!Array.isArray(lg)) lg=[];
+    var firstUse = lg.length ? localDateStr(lg[0].t) : todayKey();
+    var today = todayKey(), nowM = nowMin();
+    var blocks = sortedBlocks();
+    var days = daysBetween(fromStr, toStr);
+    var rows=[], tot={taken:0,missed:0,pending:0};
+    days.forEach(function(day){
+      var dayBlocks=[];
+      blocks.forEach(function(b){
+        var status=null, takenAt=null;
+        var evs = lg.filter(function(e){ return (e.k==="take"||e.k==="untake") && e.b===b.id && localDateStr(e.t)===day; });
+        if(evs.length){ var last=evs[evs.length-1]; if(last.k==="take"){ status="tomado"; takenAt=clockStr(last.t); } }
+        if(!status){
+          if(day < firstUse) status="sem-registro";
+          else if(day < today) status="nao-tomado";
+          else if(day === today) status = (nowM > endMin(b)) ? "nao-tomado" : "pendente";
+          else status="pendente";
+        }
+        if(status==="tomado") tot.taken++;
+        else if(status==="nao-tomado") tot.missed++;
+        else if(status==="pendente") tot.pending++;
+        dayBlocks.push({time:b.time, period:b.period, status:status, takenAt:takenAt});
+      });
+      rows.push({date:day, blocks:dayBlocks});
+    });
+    var fromMs=new Date(fromStr+"T00:00:00").getTime(), toMs=new Date(toStr+"T23:59:59").getTime();
+    var changes = lg.filter(function(e){ return ["add","edit","del","import","restore"].indexOf(e.k)>=0 && e.t>=fromMs && e.t<=toMs; });
+    return {rows:rows, changes:changes, totals:tot};
+  }
+  function buildReportHTML(rep, f, t){
+    var tot=rep.totals, denom=tot.taken+tot.missed, pct=denom?Math.round(tot.taken/denom*100):null;
+    var css="body{font-family:-apple-system,'Segoe UI',Roboto,Arial,sans-serif;color:#1c1c1c;max-width:800px;margin:0 auto;padding:24px;}"+
+      "h1{font-size:20px;margin:0 0 2px;}.sub{color:#666;font-size:13px;margin-bottom:14px;}"+
+      ".kpi{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0 18px;}.card{border:1px solid #ddd;border-radius:10px;padding:8px 14px;min-width:84px;}"+
+      ".card b{font-size:22px;display:block;line-height:1.1;}.day{border:1px solid #e5e5e5;border-radius:10px;margin-bottom:9px;overflow:hidden;}"+
+      ".day h3{margin:0;padding:7px 12px;background:#f4f4f2;font-size:14px;}.row{display:flex;justify-content:space-between;gap:10px;padding:6px 12px;border-top:1px solid #f1f1f1;font-size:14px;}"+
+      ".ok{color:#2e7d32;font-weight:700;}.no{color:#c62828;font-weight:700;}.pe{color:#999;}h2{font-size:15px;margin:22px 0 8px;}"+
+      ".chg{font-size:13px;padding:5px 0;border-bottom:1px solid #f1f1f1;color:#333;}.hint{background:#eef;border:1px solid #ccd;border-radius:8px;padding:8px 12px;font-size:13px;margin-bottom:16px;}"+
+      "@media print{.hint{display:none;}}";
+    var h="<!doctype html><html lang='pt-BR'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>Relatório de Medicação</title><style>"+css+"</style></head><body>";
+    h+="<h1>Relatório de Medicação</h1>";
+    h+="<div class='sub'>Período: "+fmtBR(f)+" a "+fmtBR(t)+" &middot; Gerado em "+fmtBR(todayKey())+" às "+fmtClock()+"</div>";
+    h+="<div class='hint'>Para salvar em PDF: menu do navegador &rarr; Imprimir &rarr; Salvar como PDF.</div>";
+    h+="<div class='kpi'>";
+    h+="<div class='card'><b>"+(pct!==null?pct+"%":"—")+"</b>adesão</div>";
+    h+="<div class='card'><b class='ok'>"+tot.taken+"</b>tomadas</div>";
+    h+="<div class='card'><b class='no'>"+tot.missed+"</b>não tomadas</div>";
+    if(tot.pending) h+="<div class='card'><b class='pe'>"+tot.pending+"</b>pendentes</div>";
+    h+="</div>";
+    rep.rows.forEach(function(day){
+      h+="<div class='day'><h3>"+fmtBR(day.date)+"</h3>";
+      day.blocks.forEach(function(b){
+        var cls=b.status==="tomado"?"ok":b.status==="nao-tomado"?"no":"pe";
+        var txt=statusPT(b.status)+(b.takenAt?(" às "+b.takenAt):"");
+        h+="<div class='row'><span>"+b.time+" — "+esc(b.period)+"</span><span class='"+cls+"'>"+txt+"</span></div>";
+      });
+      h+="</div>";
+    });
+    h+="<h2>Histórico de alterações</h2>";
+    if(rep.changes.length){ rep.changes.forEach(function(e){ h+="<div class='chg'>"+fmtBR(localDateStr(e.t))+" "+clockStr(e.t)+" — "+esc(e.d||e.k)+"</div>"; }); }
+    else { h+="<div class='chg'>Nenhuma alteração no período.</div>"; }
+    h+="<div class='sub' style='margin-top:20px'>Ferramenta de apoio. A adesão considera a lista de horários atual. Qualquer dúvida sobre a prescrição, confirme com o médico responsável.</div>";
+    h+="</body></html>";
+    return h;
+  }
+  function csvCell(s){ s=(s==null?"":String(s)).replace(/"/g,'""'); return /[;"\n]/.test(s)?'"'+s+'"':s; }
+  function buildReportCSV(rep){
+    var L=["Data;Horario;Periodo;Status;Hora tomado"];
+    rep.rows.forEach(function(day){ day.blocks.forEach(function(b){
+      L.push([fmtBR(day.date), b.time, csvCell(b.period), statusPT(b.status), b.takenAt||""].join(";"));
+    }); });
+    L.push(""); L.push("Alteracoes"); L.push("Data;Hora;Descricao");
+    rep.changes.forEach(function(e){ L.push([fmtBR(localDateStr(e.t)), clockStr(e.t), csvCell(e.d||e.k)].join(";")); });
+    return L.join("\r\n");
+  }
+
   // ---------- config export/import ----------
   function exportConfig(){ downloadBlob(JSON.stringify(SCHEDULE,null,2),"remedios-lista.json","application/json"); toast("Lista exportada."); }
   function importConfig(){
     var inp=document.createElement("input"); inp.type="file"; inp.accept=".json,application/json";
     inp.addEventListener("change",function(){ var f=inp.files[0]; if(!f)return; var r=new FileReader();
       r.onload=function(){ try{ var clean=sanitizeSchedule(JSON.parse(r.result)); if(!clean) throw 0;
-        SCHEDULE=clean; persistSchedule(); lastBlocksSig=null; lastMetaSig=null; renderStatic(); fullRender(); closeModal(); toast("Lista importada."); }
+        SCHEDULE=clean; persistSchedule(); logEvent("import", null, "Importou uma lista ("+clean.blocks.length+" horários)"); lastBlocksSig=null; lastMetaSig=null; renderStatic(); fullRender(); closeModal(); toast("Lista importada."); }
         catch(e){ toast("Arquivo inválido — a lista atual foi mantida."); } };
       r.readAsText(f); });
     inp.click();
@@ -1083,7 +1233,7 @@
     document.getElementById("btn-alarms").addEventListener("click",function(){ if(ALARM.enabled){ openTools(); } else { enableAlarms(); } });
     document.getElementById("add-block").addEventListener("click",function(){ openBlockEditor(null); });
 
-    document.getElementById("alarm-taken").addEventListener("click",function(){ if(activeAlarmBlock){ var b=activeAlarmBlock; setDone(b.id,true); setAck(b); closeAlarm(); lastBlocksSig=null; fullRender(); toast("Marcado como dado."); } });
+    document.getElementById("alarm-taken").addEventListener("click",function(){ if(activeAlarmBlock){ var b=activeAlarmBlock; setDone(b.id,true); setAck(b); logEvent("take", b); closeAlarm(); lastBlocksSig=null; fullRender(); toast("Marcado como dado."); } });
     document.getElementById("alarm-snooze").addEventListener("click",function(){ if(activeAlarmBlock){ var b=activeAlarmBlock; setSnz(b, Date.now()+(ALARM.snoozeMin||10)*60000); closeAlarm(); toast("Soneca de "+(ALARM.snoozeMin||10)+" min."); } });
     document.getElementById("alarm-stop").addEventListener("click",function(){ if(activeAlarmBlock){ setAck(activeAlarmBlock); } closeAlarm(); });
     document.getElementById("alarm-overlay").addEventListener("keydown",function(e){
