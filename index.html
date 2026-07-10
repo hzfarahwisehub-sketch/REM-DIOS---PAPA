@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Remédios do Pai — Família Farah</title>
+<meta name="description" content="Cronograma de medicamentos com alarmes, edição e calendário.">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#7A3B49">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Remédios">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icons/favicon.png">
+<style>html,body{margin:0;padding:0;background:#EAEEE8;}
+@media (prefers-color-scheme:dark){html,body{background:#12160F;}}</style>
+</head>
+<body>
+<style>
+  .app{
+    --paper:#EAEEE8; --paper-raised:#FFFFFF; --paper-sunken:#E0E5DA;
+    --ink:#211E1A; --ink-soft:#5B5B52; --ink-faint:#6E6E60;
+    --line:#D7DCD1; --line-strong:#C4CABC;
+    --accent:#7A3B49; --accent-ink:#FFFFFF; --accent-soft:#F1E3E6;
+    --good:#3D7A4C; --good-bg:#E1EEE0; --good-line:#BBD8BA;
+    --warn:#A6432B; --warn-bg:#F5E2DB; --warn-line:#E3BBAC;
+    --dawn:#C97C3D; --dawn-bg:#F5E7D8; --dawn-ink:#8C4E1A;
+    --morning:#3F7896; --morning-bg:#DEEAF0; --morning-ink:#33637C;
+    --afternoon:#9C7A1F; --afternoon-bg:#F0E6C8; --afternoon-ink:#6E5514;
+    --dusk:#B5573E; --dusk-bg:#F3E0D6; --dusk-ink:#93462F;
+    --night:#463D73; --night-bg:#E4E1F0; --night-ink:#463D73;
+    --cta-ink:#FFFFFF;
+    --shadow-sm:0 1px 2px rgba(33,30,26,0.07);
+    --shadow-md:0 6px 20px rgba(33,30,26,0.09);
+    --shadow-lg:0 18px 50px rgba(33,30,26,0.22);
+    --radius-lg:20px; --radius-md:14px; --radius-sm:10px;
+    --font-display:Georgia,'Iowan Old Style','Times New Roman',serif;
+    --font-body:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  }
+  /* ---- MEIO A MEIO (dim, warm) ---- */
+  .app[data-theme="mid"]{
+    --paper:#2B2A26; --paper-raised:#363530; --paper-sunken:#232220;
+    --ink:#F0EBE1; --ink-soft:#BAB3A5; --ink-faint:#948D7E;
+    --line:#46443D; --line-strong:#565349;
+    --accent:#E0A6B0; --accent-ink:#2B1219; --accent-soft:#3E2A2F;
+    --good:#8FD09C; --good-bg:#25382A; --good-line:#3C6142;
+    --warn:#EBA48D; --warn-bg:#3E2A22; --warn-line:#6E4636;
+    --dawn:#E6A567; --dawn-bg:#3C2F1E; --dawn-ink:#E6A567;
+    --morning:#87BCD8; --morning-bg:#233642; --morning-ink:#87BCD8;
+    --afternoon:#DCBB5F; --afternoon-bg:#3C331C; --afternoon-ink:#DCBB5F;
+    --dusk:#E89A78; --dusk-bg:#3C2A22; --dusk-ink:#E89A78;
+    --night:#AEA2E2; --night-bg:#2C2843; --night-ink:#AEA2E2;
+    --cta-ink:#201E1A;
+    --shadow-sm:0 1px 2px rgba(0,0,0,0.30);
+    --shadow-md:0 8px 24px rgba(0,0,0,0.36);
+    --shadow-lg:0 18px 50px rgba(0,0,0,0.5);
+  }
+  /* ---- ESCURO (near-black) ---- */
+  .app[data-theme="dark"]{
+    --paper:#12160F; --paper-raised:#1B211A; --paper-sunken:#0C0F0A;
+    --ink:#EDEAE2; --ink-soft:#ACB2A4; --ink-faint:#8F958A;
+    --line:#2C332B; --line-strong:#3B443A;
+    --accent:#DC9CA8; --accent-ink:#2B1219; --accent-soft:#3A2429;
+    --good:#84CB93; --good-bg:#17281A; --good-line:#2E5334;
+    --warn:#E79A82; --warn-bg:#331F18; --warn-line:#63402F;
+    --dawn:#E29C61; --dawn-bg:#332617; --dawn-ink:#E29C61;
+    --morning:#7FB6D4; --morning-bg:#182A33; --morning-ink:#7FB6D4;
+    --afternoon:#D6B559; --afternoon-bg:#322A14; --afternoon-ink:#D6B559;
+    --dusk:#E2926F; --dusk-bg:#33211B; --dusk-ink:#E2926F;
+    --night:#A79BDD; --night-bg:#221E38; --night-ink:#A79BDD;
+    --cta-ink:#12160F;
+    --shadow-sm:0 1px 2px rgba(0,0,0,0.4);
+    --shadow-md:0 8px 26px rgba(0,0,0,0.5);
+    --shadow-lg:0 18px 55px rgba(0,0,0,0.65);
+  }
+
+  *{box-sizing:border-box;}
+  [hidden]{display:none !important;}
+  html,body{margin:0;}
+  .app{
+    background:var(--paper); color:var(--ink); font-family:var(--font-body);
+    font-size:16px; line-height:1.5; min-height:100vh;
+    padding:0 0 calc(3.5rem + env(safe-area-inset-bottom)); -webkit-font-smoothing:antialiased;
+    transition:background-color 0.25s ease, color 0.25s ease;
+  }
+  .wrap{max-width:640px; margin:0 auto; padding:0 1.1rem;}
+  .sr-only{position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden;
+    clip:rect(0,0,0,0); white-space:nowrap; border:0;}
+  button{font-family:inherit;}
+
+  /* ---------- TOP BAR ---------- */
+  .topbar{
+    background:color-mix(in srgb, var(--paper) 90%, transparent);
+    position:sticky; top:0; z-index:20;
+    border-bottom:1px solid var(--line); padding:calc(0.7rem + env(safe-area-inset-top)) 0 0.6rem;
+    backdrop-filter:saturate(140%) blur(8px); -webkit-backdrop-filter:saturate(140%) blur(8px);
+  }
+  .topbar-inner{display:flex; align-items:center; justify-content:space-between; gap:0.6rem;}
+  .word{font-family:var(--font-display); font-weight:700; font-size:1.22rem; letter-spacing:0.01em;
+    line-height:1.12; margin:0;}
+  .word small{display:block; font-family:var(--font-body); font-weight:600; font-size:0.64rem;
+    letter-spacing:0.09em; text-transform:uppercase; color:var(--ink-soft); margin-top:0.16rem;}
+  .clockbox{text-align:right; flex-shrink:0;}
+  .clock{font-family:var(--font-display); font-variant-numeric:tabular-nums; font-size:1.35rem;
+    font-weight:700; line-height:1;}
+  .dateline{font-size:0.72rem; color:var(--ink-soft); margin-top:0.18rem; text-transform:capitalize;}
+
+  /* ---------- TOOLBAR ---------- */
+  .toolbar{display:flex; gap:0.4rem; margin-top:0.65rem; flex-wrap:wrap; align-items:center;}
+  .tool-btn{
+    display:inline-flex; align-items:center; gap:0.35rem; min-height:38px; padding:0.35rem 0.7rem;
+    border:1px solid var(--line-strong); background:var(--paper-raised); color:var(--ink);
+    border-radius:999px; font-size:0.8rem; font-weight:600; cursor:pointer;
+    transition:background-color 0.12s ease, border-color 0.12s ease;
+  }
+  .tool-btn:hover{border-color:var(--accent);}
+  .tool-btn:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
+  .tool-btn svg{width:15px; height:15px;}
+  .tool-btn.active{background:var(--accent); color:var(--accent-ink); border-color:var(--accent);}
+  .tool-btn.alarm-on{background:var(--good-bg); border-color:var(--good-line); color:var(--good);}
+  .theme-switch{display:inline-flex; border:1px solid var(--line-strong); border-radius:999px; overflow:hidden; background:var(--paper-raised);}
+  .theme-switch button{
+    border:none; background:transparent; color:var(--ink-soft); cursor:pointer;
+    width:38px; height:38px; display:flex; align-items:center; justify-content:center; font-size:1rem;
+  }
+  .theme-switch button.on{background:var(--accent); color:var(--accent-ink);}
+  .theme-switch button:focus-visible{outline:2px solid var(--accent); outline-offset:-2px;}
+
+  main{padding-top:1.1rem;}
+  .shell{display:grid; grid-template-columns:1fr; gap:0;}
+  section{margin-bottom:1.6rem;}
+  .eyebrow{font-family:var(--font-body); font-size:0.7rem; font-weight:700; letter-spacing:0.1em;
+    text-transform:uppercase; color:var(--ink-soft); margin:0 0 0.6rem; display:flex; justify-content:space-between; align-items:center; gap:0.5rem;}
+  .eyebrow .mini{font-weight:600; letter-spacing:0; text-transform:none; font-size:0.72rem;}
+  .link-btn{background:none; border:none; color:var(--accent); font-weight:700; cursor:pointer; font-size:0.78rem; padding:0.2rem 0.3rem; border-radius:6px;}
+  .link-btn:focus-visible{outline:2px solid var(--accent); outline-offset:1px;}
+
+  /* ---------- HERO ---------- */
+  .hero{background:var(--paper-raised); border:1px solid var(--line); border-radius:var(--radius-lg);
+    padding:1.2rem 1.25rem 1.25rem; box-shadow:var(--shadow-md); position:relative; overflow:hidden;}
+  .hero::before{content:""; position:absolute; inset:0 0 auto 0; height:5px; background:var(--hero-color,var(--accent));}
+  .hero-top{display:flex; align-items:center; gap:0.55rem; margin-bottom:0.5rem;}
+  .hero-dot{width:10px; height:10px; border-radius:50%; background:var(--hero-color,var(--accent));
+    box-shadow:0 0 0 4px color-mix(in srgb, var(--hero-color,var(--accent)) 22%, transparent); flex-shrink:0;}
+  .hero-dot.pulse{animation:pulse 2.4s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{opacity:1;} 50%{opacity:0.4;}}
+  .hero-label{font-size:0.76rem; font-weight:700; letter-spacing:0.09em; text-transform:uppercase; color:var(--hero-ink,var(--accent));}
+  .hero-time{font-family:var(--font-display); font-weight:700; font-size:2.9rem; line-height:1.02;
+    font-variant-numeric:tabular-nums; margin:0.12rem 0 0.2rem; letter-spacing:-0.01em;}
+  .hero-desc{color:var(--ink-soft); font-size:0.94rem; margin:0 0 0.9rem; max-width:34rem;}
+  .hero-meta{display:flex; flex-wrap:wrap; gap:0.45rem; margin-bottom:1rem;}
+  .badge{display:inline-flex; align-items:center; gap:0.3rem; font-size:0.75rem; font-weight:600;
+    padding:0.3rem 0.62rem; border-radius:999px; border:1px solid transparent; line-height:1.2;}
+  .badge-warn{background:var(--warn-bg); color:var(--warn); border-color:var(--warn-line);}
+  .badge-good{background:var(--good-bg); color:var(--good); border-color:var(--good-line);}
+  .badge-muted{background:var(--paper-sunken); color:var(--ink-soft);}
+  button.badge{cursor:pointer;}
+  button.badge:focus-visible{outline:2px solid var(--ink); outline-offset:2px;}
+  .hero-cta{display:flex; align-items:center; justify-content:center; gap:0.5rem; width:100%;
+    min-height:54px; padding:0.8rem 1.2rem; border:none; border-radius:var(--radius-sm);
+    background:var(--hero-ink,var(--accent)); color:var(--cta-ink);
+    font-weight:700; font-size:1rem; cursor:pointer; transition:filter 0.15s ease, transform 0.08s ease;}
+  .hero-cta:hover{filter:brightness(1.08);}
+  .hero-cta:active{transform:scale(0.985);}
+  .hero-cta:focus-visible{outline:3px solid var(--ink); outline-offset:2px;}
+  .hero-cta svg{width:18px; height:18px; flex-shrink:0;}
+  .hero-cta[hidden]{display:none;}
+
+  /* ---------- PROGRESS ---------- */
+  .progress-card{background:var(--paper-raised); border:1px solid var(--line); border-radius:var(--radius-md);
+    padding:1rem 1.15rem 1.1rem; box-shadow:var(--shadow-sm);}
+  .progress-head{display:flex; align-items:baseline; justify-content:space-between; gap:0.6rem; margin-bottom:0.7rem;}
+  .progress-title{font-size:0.86rem; font-weight:600; color:var(--ink-soft);}
+  .progress-count{font-family:var(--font-display); font-weight:700; font-size:1.35rem; font-variant-numeric:tabular-nums;}
+  .progress-count span{color:var(--ink-soft); font-size:0.95rem;}
+  .segments{display:flex; gap:6px;}
+  .seg{flex:1; height:12px; border-radius:999px; background:var(--paper-sunken); position:relative; overflow:hidden;}
+  .seg::after{content:""; position:absolute; inset:0; border-radius:999px; background:var(--seg-color); opacity:0; transition:opacity 0.25s ease;}
+  .seg.on::after{opacity:1;}
+  .seg-labels{display:flex; gap:6px; margin-top:0.45rem;}
+  .seg-label{flex:1; text-align:center; font-size:0.78rem; font-weight:700; font-variant-numeric:tabular-nums; color:var(--ink-soft);}
+
+  /* ---------- BLOCKS ---------- */
+  .blocks{display:flex; flex-direction:column; gap:0.8rem;}
+  .block{background:var(--paper-raised); border:1px solid var(--line); border-radius:var(--radius-md);
+    box-shadow:var(--shadow-sm); overflow:hidden; scroll-margin-top:8.5rem;}
+  .block[data-status="done"]{border-color:var(--good-line); background:color-mix(in srgb, var(--good-bg) 28%, var(--paper-raised));}
+  .block[data-status="done"] .b-icon{opacity:0.55;}
+  .block[data-status="current"]{border-color:color-mix(in srgb, var(--block-color) 55%, var(--line)); box-shadow:var(--shadow-md);}
+  .block > summary{list-style:none; cursor:pointer; padding:1rem 1.05rem; display:flex; align-items:center; gap:0.85rem;
+    border-left:6px solid var(--block-color,var(--ink-faint)); min-height:64px;}
+  .block > summary::-webkit-details-marker{display:none;}
+  .block > summary:focus-visible{outline:3px solid var(--accent); outline-offset:-3px;}
+  .b-icon{width:34px; height:34px; border-radius:10px; background:var(--block-bg,var(--paper-sunken));
+    color:var(--block-ink,var(--ink-soft)); display:flex; align-items:center; justify-content:center; flex-shrink:0;}
+  .b-icon svg{width:19px; height:19px;}
+  .b-time{font-family:var(--font-display); font-weight:700; font-size:1.4rem; font-variant-numeric:tabular-nums;
+    min-width:4.6rem; letter-spacing:-0.01em;}
+  .b-main{flex:1; min-width:0; overflow:hidden;}
+  .b-period{display:block; font-size:0.7rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase;
+    color:var(--block-ink,var(--ink-soft)); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .b-count{font-size:0.84rem; color:var(--ink-soft); margin-top:0.12rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .b-badge{flex-shrink:0; display:flex;}
+  .chev{width:11px; height:11px; border-right:2.5px solid var(--ink-faint); border-bottom:2.5px solid var(--ink-faint);
+    transform:rotate(-45deg); transition:transform 0.18s ease; flex-shrink:0; margin-right:0.15rem;}
+  .block[open] > summary .chev{transform:rotate(45deg);}
+
+  .block-body{padding:0 1.05rem 1.15rem; border-top:1px solid var(--line);}
+  .food-line{display:flex; gap:0.45rem; align-items:baseline; font-size:0.86rem; color:var(--ink-soft); margin:0.9rem 0 0.8rem;}
+  .food-line strong{color:var(--ink); font-weight:600;}
+  .items{display:flex; flex-direction:column; gap:0.55rem; margin-bottom:1rem;}
+  .item{display:flex; justify-content:space-between; align-items:flex-start; gap:0.9rem; padding:0.65rem 0.8rem;
+    background:var(--paper-sunken); border-radius:var(--radius-sm);}
+  .item.important{background:var(--warn-bg); border:1px solid var(--warn-line);}
+  .item-name{font-size:0.95rem; font-weight:600;}
+  .item-obs{font-size:0.81rem; color:var(--ink-soft); margin-top:0.18rem;}
+  .item-obs.important{color:var(--warn); font-weight:700;}
+  .item-qty{font-size:0.88rem; font-weight:700; font-variant-numeric:tabular-nums; color:var(--ink-soft); text-align:right; max-width:9.5rem; white-space:normal;}
+  .mark-btn{width:100%; min-height:54px; border:2px solid var(--block-color,var(--line)); background:transparent;
+    color:var(--block-ink,var(--ink)); font-weight:700; font-size:0.98rem; padding:0.75rem 1rem; border-radius:var(--radius-sm);
+    cursor:pointer; display:flex; align-items:center; justify-content:center; gap:0.55rem;
+    transition:background-color 0.15s ease, color 0.15s ease, transform 0.08s ease;}
+  .mark-btn:hover{background:var(--block-ink,var(--ink)); color:var(--paper-raised); border-color:var(--block-ink,var(--ink));}
+  .mark-btn:active{transform:scale(0.985);}
+  .mark-btn:focus-visible{outline:3px solid var(--accent); outline-offset:2px;}
+  .mark-btn[data-done="true"]{background:var(--good-bg); color:var(--good); border-color:var(--good-line);}
+  .mark-btn[data-done="true"]:hover{background:var(--good); color:var(--paper-raised);}
+  .mark-btn svg{width:17px; height:17px; flex-shrink:0;}
+  .local-note{font-size:0.78rem; color:var(--ink-soft); margin:0.6rem 0 0; text-align:left; line-height:1.5;}
+
+  /* edit controls inside block */
+  .edit-row{display:flex; gap:0.5rem; margin-top:0.75rem;}
+  .edit-row .mini-btn{flex:1;}
+  .mini-btn{min-height:44px; border:1.5px solid var(--line-strong); background:var(--paper-sunken); color:var(--ink);
+    border-radius:var(--radius-sm); font-weight:700; font-size:0.86rem; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:0.4rem;}
+  .mini-btn:hover{border-color:var(--accent);}
+  .mini-btn:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
+  .mini-btn.danger{color:var(--warn); border-color:var(--warn-line);}
+  .mini-btn svg{width:15px; height:15px;}
+  .add-block-btn{width:100%; min-height:54px; border:2px dashed var(--line-strong); background:transparent; color:var(--ink-soft);
+    border-radius:var(--radius-md); font-weight:700; font-size:0.95rem; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:0.5rem;}
+  .add-block-btn:hover{border-color:var(--accent); color:var(--accent);}
+  .add-block-btn:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
+  .edit-banner{background:var(--accent-soft); border:1px solid var(--accent); border-radius:var(--radius-md);
+    padding:0.7rem 0.9rem; font-size:0.84rem; color:var(--ink); margin-bottom:0.9rem; display:flex; gap:0.5rem; align-items:center;}
+  .edit-banner strong{color:var(--accent);}
+
+  /* ---------- INFO / LEGEND ---------- */
+  .info-card{background:var(--paper-raised); border:1px solid var(--line); border-radius:var(--radius-md);
+    padding:1rem 1.15rem; box-shadow:var(--shadow-sm); font-size:0.85rem; color:var(--ink-soft); line-height:1.55;}
+  .info-card + .info-card{margin-top:0.65rem;}
+  .info-card strong{color:var(--ink);}
+  .legend-grid{display:grid; grid-template-columns:1fr 1fr; gap:0.5rem 1rem;}
+  .legend-row{display:flex; align-items:center; gap:0.5rem;}
+  .legend-row .swatch{width:11px; height:11px; border-radius:50%; flex-shrink:0;}
+  .legend-full{grid-column:1 / -1;}
+  .pending-note{border-color:var(--warn-line); background:var(--warn-bg);}
+  .pending-note strong{color:var(--warn);}
+
+  footer{padding-top:0.5rem;}
+  .fine{font-size:0.78rem; color:var(--ink-soft); text-align:center; line-height:1.65;}
+
+  /* ---------- MODAL ---------- */
+  .modal-back{position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:60; display:flex; align-items:flex-end; justify-content:center;
+    padding:0; opacity:0; pointer-events:none; transition:opacity 0.2s ease;}
+  .modal-back.open{opacity:1; pointer-events:auto;}
+  .modal{background:var(--paper); width:100%; max-width:560px; max-height:92vh; overflow-y:auto;
+    border-radius:var(--radius-lg) var(--radius-lg) 0 0; box-shadow:var(--shadow-lg);
+    padding:1.1rem 1.15rem calc(1.4rem + env(safe-area-inset-bottom)); transform:translateY(20px); transition:transform 0.2s ease;}
+  .modal-back.open .modal{transform:translateY(0);}
+  .modal h3{font-family:var(--font-display); font-size:1.25rem; margin:0.2rem 0 1rem;}
+  .modal-close{position:absolute; }
+  .field{margin-bottom:0.85rem;}
+  .field label{display:block; font-size:0.76rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:var(--ink-soft); margin-bottom:0.35rem;}
+  .field input[type=text], .field input[type=time], .field select, .field textarea{
+    width:100%; padding:0.65rem 0.7rem; border:1.5px solid var(--line-strong); border-radius:var(--radius-sm);
+    background:var(--paper-raised); color:var(--ink); font-size:1rem; font-family:inherit;}
+  .field input:focus, .field select:focus, .field textarea:focus{outline:2px solid var(--accent); outline-offset:0; border-color:var(--accent);}
+  .field .row2{display:flex; gap:0.6rem;}
+  .field .row2 > *{flex:1;}
+  .check-row{display:flex; align-items:center; gap:0.5rem; margin-bottom:0.85rem; font-size:0.9rem;}
+  .check-row input{width:20px; height:20px;}
+  .med-editor{border:1px solid var(--line); border-radius:var(--radius-sm); padding:0.7rem; margin-bottom:0.6rem; background:var(--paper-raised);}
+  .med-editor .row2{display:flex; gap:0.5rem; margin-bottom:0.5rem;}
+  .med-editor input{margin-bottom:0.5rem;}
+  .med-editor .med-foot{display:flex; justify-content:space-between; align-items:center;}
+  .med-editor .med-imp{display:flex; align-items:center; gap:0.4rem; font-size:0.82rem; color:var(--ink-soft);}
+  .modal-actions{display:flex; gap:0.6rem; margin-top:1rem;}
+  .btn{min-height:52px; border-radius:var(--radius-sm); font-weight:700; font-size:0.98rem; cursor:pointer; border:none; flex:1;
+    display:flex; align-items:center; justify-content:center; gap:0.4rem;}
+  .btn-primary{background:var(--accent); color:var(--accent-ink);}
+  .btn-ghost{background:transparent; border:1.5px solid var(--line-strong); color:var(--ink);}
+  .btn-danger{background:var(--warn); color:#fff;}
+  .btn:focus-visible{outline:3px solid var(--ink); outline-offset:2px;}
+  .modal .helper{font-size:0.8rem; color:var(--ink-soft); line-height:1.5; margin:0.3rem 0 0.9rem;}
+  .step{display:flex; gap:0.6rem; margin-bottom:0.75rem; font-size:0.9rem; line-height:1.5;}
+  .step-n{flex-shrink:0; width:24px; height:24px; border-radius:50%; background:var(--accent); color:var(--accent-ink);
+    font-size:0.8rem; font-weight:700; display:flex; align-items:center; justify-content:center;}
+  .times-chips{display:flex; flex-wrap:wrap; gap:0.4rem; margin:0.6rem 0 1rem;}
+  .time-chip{background:var(--paper-sunken); border:1px solid var(--line); border-radius:999px; padding:0.3rem 0.7rem;
+    font-weight:700; font-variant-numeric:tabular-nums; font-size:0.9rem;}
+  .radio-list{display:flex; flex-direction:column; gap:0.5rem; margin-bottom:0.6rem;}
+  .radio-item{display:flex; align-items:center; gap:0.6rem; padding:0.6rem 0.7rem; border:1.5px solid var(--line-strong);
+    border-radius:var(--radius-sm); cursor:pointer;}
+  .radio-item.sel{border-color:var(--accent); background:var(--accent-soft);}
+  .radio-item input{width:20px; height:20px;}
+  .sound-play{margin-left:auto; background:var(--paper-sunken); border:1px solid var(--line-strong); border-radius:8px;
+    padding:0.3rem 0.55rem; font-size:0.78rem; cursor:pointer; color:var(--ink);}
+
+  /* ---------- ALARM OVERLAY ---------- */
+  .alarm-overlay{position:fixed; inset:0; z-index:100; background:var(--alarm-color,var(--accent));
+    display:none; flex-direction:column; align-items:center; justify-content:center; text-align:center;
+    padding:2rem 1.5rem calc(2rem + env(safe-area-inset-bottom)); color:#fff;}
+  .alarm-overlay.show{display:flex;}
+  .alarm-overlay.buzz{animation:buzz 0.9s ease-in-out infinite;}
+  @keyframes buzz{0%,100%{transform:translateX(0);} 25%{transform:translateX(-4px);} 75%{transform:translateX(4px);}}
+  .alarm-overlay .a-time{font-family:var(--font-display); font-weight:700; font-size:4rem; line-height:1; font-variant-numeric:tabular-nums;}
+  .alarm-overlay .a-label{font-size:1rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; margin-top:0.5rem; opacity:0.9;}
+  .alarm-overlay .a-meds{background:rgba(255,255,255,0.16); border-radius:var(--radius-md); padding:1rem 1.15rem; margin:1.5rem 0;
+    max-width:420px; width:100%; text-align:left; max-height:40vh; overflow-y:auto;}
+  .alarm-overlay .a-meds li{margin-bottom:0.5rem; font-size:0.98rem; line-height:1.4;}
+  .alarm-overlay .a-meds li:last-child{margin-bottom:0;}
+  .alarm-overlay .a-meds b{font-weight:700;}
+  .alarm-actions{display:flex; flex-direction:column; gap:0.7rem; width:100%; max-width:420px;}
+  .a-btn{min-height:58px; border-radius:var(--radius-md); font-weight:700; font-size:1.05rem; cursor:pointer; border:none;
+    display:flex; align-items:center; justify-content:center; gap:0.5rem;}
+  .a-btn-taken{background:#fff; color:var(--alarm-color,var(--accent));}
+  .a-btn-snooze{background:rgba(255,255,255,0.22); color:#fff; border:1.5px solid rgba(255,255,255,0.6);}
+  .a-btn-stop{background:transparent; color:#fff; border:1.5px solid rgba(255,255,255,0.45); min-height:48px; font-size:0.92rem;}
+  .a-btn:focus-visible{outline:3px solid #fff; outline-offset:3px;}
+
+  /* toast */
+  .toast{position:fixed; left:50%; transform:translateX(-50%); bottom:calc(1.4rem + env(safe-area-inset-bottom)); z-index:80;
+    background:var(--ink); color:var(--paper); padding:0.7rem 1.1rem; border-radius:999px; font-size:0.86rem; font-weight:600;
+    box-shadow:var(--shadow-md); opacity:0; pointer-events:none; transition:opacity 0.2s ease;}
+  .toast.show{opacity:1;}
+
+  /* ---------- MOTION ---------- */
+  @media (prefers-reduced-motion:reduce){
+    .hero-dot.pulse{animation:none;}
+    .chev,.seg::after,.mark-btn,.hero-cta,.app,.modal,.modal-back{transition:none;}
+    .alarm-overlay.buzz{animation:none;}
+  }
+  /* ---------- NARROW ---------- */
+  @media (max-width:420px){
+    .block > summary{gap:0.55rem; padding:0.95rem 0.85rem;}
+    .b-time{min-width:auto; font-size:1.2rem;}
+    .b-icon{width:28px; height:28px; border-radius:8px;}
+    .b-icon svg{width:16px; height:16px;}
+    .word{font-size:1.1rem;}
+    .clock{font-size:1.2rem;}
+  }
+  /* ---------- DESKTOP ---------- */
+  @media (min-width:960px){
+    .wrap{max-width:1120px; padding:0 2rem;}
+    .shell{grid-template-columns:400px 1fr; gap:2.2rem; align-items:start;}
+    .side{position:sticky; top:8.5rem;}
+    .side section:last-child{margin-bottom:0;}
+    .hero-time{font-size:3.3rem;}
+    .word{font-size:1.4rem;}
+    main{padding-top:1.5rem;}
+    .blocks{gap:0.9rem;}
+    .modal-back{align-items:center; padding:1.5rem;}
+    .modal{border-radius:var(--radius-lg);}
+  }
+  @media (min-width:600px) and (max-width:959.9px){ .wrap{max-width:700px;} }
+</style>
+
+<div class="app" id="app" lang="pt-BR">
+  <div class="topbar">
+    <div class="wrap">
+      <div class="topbar-inner">
+        <h1 class="word">Remédios do Pai<small>Família Farah</small></h1>
+        <div class="clockbox">
+          <div class="clock" id="clock">--:--</div>
+          <div class="dateline" id="dateline">&nbsp;</div>
+        </div>
+      </div>
+      <div class="toolbar">
+        <div class="theme-switch" role="group" aria-label="Tom de cor">
+          <button type="button" data-theme-set="light" title="Claro" aria-label="Tema claro">☀️</button>
+          <button type="button" data-theme-set="mid" title="Meio a meio" aria-label="Tema meio a meio">🌗</button>
+          <button type="button" data-theme-set="dark" title="Escuro" aria-label="Tema escuro">🌙</button>
+        </div>
+        <button type="button" class="tool-btn" id="btn-alarms" aria-pressed="false">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+          <span id="btn-alarms-text">Ativar alarmes</span>
+        </button>
+        <button type="button" class="tool-btn" id="btn-edit" aria-pressed="false">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4Z"></path></svg>
+          <span>Editar</span>
+        </button>
+        <button type="button" class="tool-btn" id="btn-tools">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle cx="5" cy="12" r="1"></circle></svg>
+          <span>Mais</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="announcer" class="sr-only" aria-live="polite" lang="pt-BR"></div>
+
+  <div class="wrap">
+    <main>
+      <div class="shell">
+        <div class="side">
+          <section>
+            <h2 class="eyebrow" id="hero-eyebrow">Agora</h2>
+            <div class="hero" id="hero">
+              <div class="hero-top"><span class="hero-dot" id="hero-dot"></span><span class="hero-label" id="hero-label">&nbsp;</span></div>
+              <div class="hero-time" id="hero-time">&nbsp;</div>
+              <p class="hero-desc" id="hero-desc">&nbsp;</p>
+              <div class="hero-meta" id="hero-meta"></div>
+              <button type="button" class="hero-cta" id="hero-cta" hidden><span id="hero-cta-text">Ver lista</span></button>
+            </div>
+          </section>
+          <section>
+            <h2 class="eyebrow">Progresso de hoje</h2>
+            <div class="progress-card">
+              <div class="progress-head">
+                <span class="progress-title">Blocos dados</span>
+                <span class="progress-count" id="progress-count">0 <span>de 5</span></span>
+              </div>
+              <div class="segments" id="segments"></div>
+              <div class="seg-labels" id="seg-labels"></div>
+            </div>
+          </section>
+        </div>
+
+        <div class="content">
+          <section>
+            <h2 class="eyebrow">Os horários <span class="mini" id="blocks-hint"></span></h2>
+            <div id="edit-banner" class="edit-banner" hidden>
+              <strong>Modo edição.</strong> <span>Toque em um horário para alterar, ou use os botões de cada bloco.</span>
+            </div>
+            <div class="blocks" id="blocks"></div>
+            <button type="button" class="add-block-btn" id="add-block" hidden>
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+              Adicionar novo horário
+            </button>
+          </section>
+
+          <section>
+            <div class="info-card">
+              <div class="legend-grid" id="legend"></div>
+            </div>
+            <div class="info-card" id="pending-card" hidden></div>
+            <div class="info-card">
+              <strong>Alarme no celular:</strong> este app avisa por som e vibração enquanto estiver aberto. Para o alarme tocar sozinho na hora certa mesmo com o celular guardado, use o botão <strong>"Mais"</strong> e configure o <strong>calendário</strong> ou os <strong>alarmes do Relógio</strong>.
+            </div>
+          </section>
+
+          <footer>
+            <p class="fine" id="footer-note"></p>
+          </footer>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- MODAL -->
+  <div class="modal-back" id="modal-back" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal" id="modal">
+      <h3 id="modal-title">Título</h3>
+      <div id="modal-content"></div>
+    </div>
+  </div>
+
+  <!-- ALARM OVERLAY -->
+  <div class="alarm-overlay" id="alarm-overlay" role="alertdialog" aria-labelledby="alarm-title" aria-describedby="alarm-meds">
+    <div class="a-time" id="alarm-time">00:00</div>
+    <div class="a-label" id="alarm-title">Hora do remédio</div>
+    <ul class="a-meds" id="alarm-meds"></ul>
+    <div class="alarm-actions">
+      <button type="button" class="a-btn a-btn-taken" id="alarm-taken">✓ Tomei — marcar como dado</button>
+      <button type="button" class="a-btn a-btn-snooze" id="alarm-snooze">Soneca (10 min)</button>
+      <button type="button" class="a-btn a-btn-stop" id="alarm-stop">Parar o som</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var STORE_SCHEDULE = "remedios-schedule-v2";
+  var STORE_THEME = "remedios-theme";
+  var STORE_ALARM = "remedios-alarm-settings";
+
+  var ICON_KEYS = ["dawn","morning","afternoon","dusk","night"];
+  var ICON_NAMES = {dawn:"Nascer do sol",morning:"Sol / manhã",afternoon:"Prato / almoço",dusk:"Pôr do sol",night:"Lua / noite"};
+  var ICONS = {
+    dawn:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 18a5 5 0 0 0-10 0"></path><line x1="12" y1="9" x2="12" y2="2"></line><line x1="4.22" y1="10.22" x2="5.64" y2="11.64"></line><line x1="1" y1="18" x2="3" y2="18"></line><line x1="21" y1="18" x2="23" y2="18"></line><line x1="18.36" y1="11.64" x2="19.78" y2="10.22"></line><line x1="23" y1="22" x2="1" y2="22"></line><polyline points="8 6 12 2 16 6"></polyline></svg>',
+    morning:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>',
+    afternoon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"></path><path d="M7 2v20"></path><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"></path></svg>',
+    dusk:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 18a5 5 0 0 0-10 0"></path><line x1="12" y1="2" x2="12" y2="9"></line><line x1="4.22" y1="10.22" x2="5.64" y2="11.64"></line><line x1="1" y1="18" x2="3" y2="18"></line><line x1="21" y1="18" x2="23" y2="18"></line><line x1="18.36" y1="11.64" x2="19.78" y2="10.22"></line><line x1="23" y1="22" x2="1" y2="22"></line><polyline points="16 5 12 9 8 5"></polyline></svg>',
+    night:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>'
+  };
+  var PERIOD_COLORS = {dawn:"--dawn",morning:"--morning",afternoon:"--afternoon",dusk:"--dusk",night:"--night"};
+
+  function seedSchedule(){
+    return {
+      version:2,
+      blocks:[
+        {id:"b0630", time:"06:30", period:"Ao acordar", icon:"dawn", windowReal:false, windowEnd:"08:00",
+         alimento:"Não especificado na prescrição",
+         itens:[
+           {nome:"Levotiroxina sódica 75 mg", qtd:"1 comprimido", obs:"", important:false},
+           {nome:"Rosuvastatina 20 mg", qtd:"1 comprimido", obs:"JUNTO com a Ezetimiba", important:false},
+           {nome:"Ezetimiba", qtd:"1 comprimido", obs:"JUNTO com a Rosuvastatina", important:false}
+         ]},
+        {id:"b0900", time:"09:00", period:"Manhã", icon:"morning", windowReal:false, windowEnd:"10:30",
+         alimento:"Não especificado na prescrição",
+         itens:[
+           {nome:"Bisoprolol 5 mg", qtd:"2 comprimidos", obs:"", important:false},
+           {nome:"Sertralina 50 mg", qtd:"2 comprimidos", obs:"", important:false},
+           {nome:"Amiodarona 100 mg", qtd:"1 comprimido", obs:"", important:false},
+           {nome:"Piridostigmina 60 mg", qtd:"1 comprimido", obs:"", important:false},
+           {nome:"Apixabana 5 mg", qtd:"1/2 comprimido", obs:"Cortar 1 comprimido ao meio. 1ª dose (2x ao dia, a cada 12h)", important:false},
+           {nome:"Furosemida 40 mg", qtd:"1 comprimido", obs:"", important:false},
+           {nome:"Bicarbonato de sódio", qtd:"1 colher de chá diluída em 50 ml de água", obs:"IMPORTANTE", important:true}
+         ]},
+        {id:"b1230", time:"12:30", period:"Após o almoço", icon:"afternoon", windowReal:true, windowEnd:"13:30",
+         alimento:"COM alimento — após o almoço (12:30 às 13:30)",
+         itens:[
+           {nome:"Aciclovir 200 mg", qtd:"1 comprimido", obs:"", important:false},
+           {nome:"Deflazacort 30 mg", qtd:"3 comprimidos", obs:"", important:false},
+           {nome:"Complexo B + ácido fólico", qtd:"", obs:"TOMAR ATÉ TERMINAR (quantidade não especificada na lista)", important:false}
+         ]},
+        {id:"b1630", time:"16:30", period:"Final da tarde", icon:"dusk", windowReal:false, windowEnd:"18:00",
+         alimento:"Não especificado na prescrição",
+         itens:[
+           {nome:"Piridostigmina 60 mg", qtd:"1 comprimido", obs:"", important:false}
+         ]},
+        {id:"b2030", time:"20:30", period:"Noite", icon:"night", windowReal:true, windowEnd:"21:30",
+         alimento:"A definir pelo Hammis (seção de alimentação da noite pendente)",
+         itens:[
+           {nome:"Bicarbonato de sódio", qtd:"1 colher de chá diluída em 50 ml de água", obs:"IMPORTANTE", important:true},
+           {nome:"Piridostigmina 60 mg (vidrinho)", qtd:"1 comprimido", obs:"", important:false},
+           {nome:"Amiodarona 100 mg", qtd:"1 comprimido", obs:"", important:false},
+           {nome:"Apixabana", qtd:"1/2 comprimido", obs:"2ª dose, 12h após a 1ª", important:false}
+         ]}
+      ]
+    };
+  }
+
+  // ---------- state ----------
+  var SCHEDULE, ALARM, editMode=false;
+  var lastBlocksSig=null, lastHeroLabel=null, lastMetaSig=null;
+  var audioCtx=null, alarmLoop=null, activeAlarmBlock=null, snoozes={}, firedToday={};
+
+  function load(key, fb){ try{ var v=localStorage.getItem(key); return v?JSON.parse(v):fb; }catch(e){ return fb; } }
+  function save(key, val){ try{ localStorage.setItem(key, JSON.stringify(val)); }catch(e){} }
+
+  function loadSchedule(){
+    var s = load(STORE_SCHEDULE, null);
+    if(!s || !s.blocks || !s.blocks.length){ s = seedSchedule(); save(STORE_SCHEDULE, s); }
+    SCHEDULE = s;
+  }
+  function persistSchedule(){ save(STORE_SCHEDULE, SCHEDULE); }
+  function sortedBlocks(){ return SCHEDULE.blocks.slice().sort(function(a,b){ return toMin(a.time)-toMin(b.time); }); }
+
+  // ---------- time helpers ----------
+  function pad(n){ return n<10?"0"+n:""+n; }
+  function toMin(hhmm){ var p=(hhmm||"00:00").split(":"); return (+p[0])*60+(+p[1]); }
+  function nowMin(){ var d=new Date(); return d.getHours()*60+d.getMinutes(); }
+  function nowHHMM(){ var d=new Date(); return pad(d.getHours())+":"+pad(d.getMinutes()); }
+  function fmtClock(){ var d=new Date(); return pad(d.getHours())+":"+pad(d.getMinutes()); }
+  function fmtDate(){ try{ return new Date().toLocaleDateString("pt-BR",{weekday:"long",day:"numeric",month:"long"}); }catch(e){ return ""; } }
+  function todayKey(){ var d=new Date(); return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate()); }
+  function doneKey(id){ return "remedios-done-"+todayKey()+"-"+id; }
+  function isDone(id){ try{ return localStorage.getItem(doneKey(id))==="1"; }catch(e){ return false; } }
+  function setDone(id,v){ try{ localStorage.setItem(doneKey(id), v?"1":"0"); }catch(e){} }
+  function endMin(b){ return b.windowEnd?toMin(b.windowEnd):Math.min(toMin(b.time)+90, 24*60-1); }
+  function statusOf(b,n){ if(isDone(b.id))return"done"; if(n<toMin(b.time))return"upcoming"; if(n<=endMin(b))return"current"; return"late"; }
+  function minutesLabel(m){ var h=Math.floor(m/60),mm=m%60; if(h<=0)return mm+" min"; return h+"h"+(mm>0?pad(mm)+"min":""); }
+  function colorVar(b){ return "var("+(PERIOD_COLORS[b.icon]||"--accent")+")"; }
+  function bgVar(b){ return "var("+(PERIOD_COLORS[b.icon]||"--accent")+"-bg)"; }
+  function inkVar(b){ return "var("+(PERIOD_COLORS[b.icon]||"--accent")+"-ink)"; }
+  function esc(s){ return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+
+  function setText(el,t){ if(el&&el.textContent!==t) el.textContent=t; }
+  function announce(msg){ var a=document.getElementById("announcer"); a.textContent=""; a.textContent=msg; }
+  var toastTimer=null;
+  function toast(msg){ var t=document.getElementById("toast"); t.textContent=msg; t.classList.add("show");
+    clearTimeout(toastTimer); toastTimer=setTimeout(function(){ t.classList.remove("show"); },2600); }
+
+  // ---------- THEME ----------
+  function applyTheme(theme){
+    var app=document.getElementById("app");
+    app.setAttribute("data-theme", theme);
+    document.querySelectorAll("[data-theme-set]").forEach(function(b){
+      b.classList.toggle("on", b.getAttribute("data-theme-set")===theme);
+    });
+    save(STORE_THEME, theme);
+  }
+  function initTheme(){
+    var saved=load(STORE_THEME,null);
+    if(!saved){ saved = (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) ? "dark":"light"; }
+    applyTheme(saved);
+  }
+
+  // ---------- ALARM audio ----------
+  function ensureAudio(){
+    if(!audioCtx){ try{ audioCtx=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ audioCtx=null; } }
+    if(audioCtx && audioCtx.state==="suspended"){ audioCtx.resume(); }
+    return audioCtx;
+  }
+  function beep(freqs, dur, type, gain){
+    var ctx=ensureAudio(); if(!ctx) return;
+    var t0=ctx.currentTime;
+    freqs.forEach(function(f,i){
+      var o=ctx.createOscillator(), g=ctx.createGain();
+      o.type=type||"sine"; o.frequency.value=f;
+      var st=t0+i*dur;
+      g.gain.setValueAtTime(0, st);
+      g.gain.linearRampToValueAtTime(gain||0.5, st+0.02);
+      g.gain.exponentialRampToValueAtTime(0.001, st+dur*0.9);
+      o.connect(g); g.connect(ctx.destination);
+      o.start(st); o.stop(st+dur);
+    });
+  }
+  var SOUNDS={
+    sino:{name:"Sino", play:function(){ beep([880,660],0.35,"sine",0.55); }},
+    suave:{name:"Suave", play:function(){ beep([523,659,784],0.28,"sine",0.4); }},
+    urgente:{name:"Urgente", play:function(){ beep([1046,1046,1046,1046],0.14,"square",0.5); }}
+  };
+  function startAlarmSound(){
+    stopAlarmSound();
+    var s=SOUNDS[ALARM.sound]||SOUNDS.sino;
+    s.play();
+    var interval = ALARM.sound==="urgente"?1000:2000;
+    alarmLoop=setInterval(function(){ s.play(); if(ALARM.vibrate&&navigator.vibrate) navigator.vibrate([400,200,400]); }, interval);
+    if(ALARM.vibrate&&navigator.vibrate) navigator.vibrate([400,200,400]);
+  }
+  function stopAlarmSound(){ if(alarmLoop){ clearInterval(alarmLoop); alarmLoop=null; } if(navigator.vibrate) navigator.vibrate(0); }
+
+  // ---------- ALARM overlay ----------
+  function fireAlarm(b){
+    if(activeAlarmBlock) return;
+    activeAlarmBlock=b;
+    var ov=document.getElementById("alarm-overlay");
+    ov.style.setProperty("--alarm-color", colorVar(b));
+    document.getElementById("alarm-time").textContent=b.time;
+    document.getElementById("alarm-title").textContent="Remédio — "+b.period;
+    var ul=document.getElementById("alarm-meds"); ul.innerHTML="";
+    b.itens.forEach(function(it){
+      var li=document.createElement("li");
+      li.innerHTML="<b>"+esc(it.nome)+"</b>"+(it.qtd?" — "+esc(it.qtd):"")+(it.obs?'<br><span style="opacity:.85;font-size:.88em">'+esc(it.obs)+"</span>":"");
+      ul.appendChild(li);
+    });
+    ov.classList.add("show");
+    if(!prefersReduced()) ov.classList.add("buzz");
+    startAlarmSound();
+    if("Notification" in window && Notification.permission==="granted"){
+      try{ new Notification("Remédio "+b.time+" — "+b.period,{ body:b.itens.map(function(i){return i.nome;}).join(", "), tag:"remedio-"+b.id }); }catch(e){}
+    }
+    announce("Alarme: hora do remédio das "+b.time+", "+b.period);
+  }
+  function closeAlarm(){
+    stopAlarmSound();
+    var ov=document.getElementById("alarm-overlay");
+    ov.classList.remove("show"); ov.classList.remove("buzz");
+    activeAlarmBlock=null;
+  }
+  function prefersReduced(){ try{ return window.matchMedia("(prefers-reduced-motion: reduce)").matches; }catch(e){ return false; } }
+
+  function checkAlarms(){
+    if(!ALARM.enabled) return;
+    if(activeAlarmBlock) return;
+    var hhmm=nowHHMM(), n=nowMin(), tk=todayKey();
+    // snoozes
+    for(var id in snoozes){ if(snoozes[id]<=n){ var sb=SCHEDULE.blocks.find(function(x){return x.id===id;}); delete snoozes[id]; if(sb&&!isDone(sb.id)){ fireAlarm(sb); return; } } }
+    SCHEDULE.blocks.forEach(function(b){
+      var fkey=tk+"-"+b.id;
+      if(b.time===hhmm && !firedToday[fkey] && !isDone(b.id)){
+        firedToday[fkey]=true; fireAlarm(b);
+      }
+    });
+  }
+
+  // ---------- RENDER: hero ----------
+  function renderHero(n){
+    var blocks=sortedBlocks();
+    var current=blocks.find(function(b){return statusOf(b,n)==="current";});
+    var late=blocks.filter(function(b){return statusOf(b,n)==="late";});
+    var upcoming=blocks.filter(function(b){return statusOf(b,n)==="upcoming";});
+    var hero=document.getElementById("hero"),eyebrow=document.getElementById("hero-eyebrow"),
+        dot=document.getElementById("hero-dot"),label=document.getElementById("hero-label"),
+        time=document.getElementById("hero-time"),desc=document.getElementById("hero-desc"),
+        meta=document.getElementById("hero-meta"),cta=document.getElementById("hero-cta"),ctaText=document.getElementById("hero-cta-text");
+
+    function badges(b){ var h='<span class="badge badge-muted">'+b.itens.length+' item'+(b.itens.length>1?'s':'')+'</span>';
+      if(b.itens.some(function(i){return i.important;})) h+='<span class="badge badge-warn">Tem item IMPORTANTE</span>'; return h; }
+    function setMeta(html, lateBlocks){
+      var sig=html+"|late:"+lateBlocks.map(function(b){return b.id;}).join(",");
+      if(sig===lastMetaSig) return; lastMetaSig=sig;
+      meta.innerHTML=html;
+      if(lateBlocks.length){ var lb=document.createElement("button"); lb.type="button"; lb.className="badge badge-warn";
+        lb.textContent=lateBlocks.length+" horário"+(lateBlocks.length>1?"s":"")+" atrasado"+(lateBlocks.length>1?"s":"")+" — ver";
+        lb.addEventListener("click",function(){ scrollToBlock(lateBlocks[0].id); }); meta.appendChild(lb); }
+    }
+    function showCta(b,verb){ cta.hidden=false; setText(ctaText,verb+" "+b.time); cta.onclick=function(){ scrollToBlock(b.id); }; }
+    function janela(b){ return b.windowReal?("Janela da prescrição: "+b.time+" até "+b.windowEnd+". Alimento: "+b.alimento+"."):("Horário da prescrição: "+b.time+". Alimento: "+b.alimento+"."); }
+
+    var eyebrowTxt, labelTxt;
+    if(current){ hero.style.setProperty("--hero-color",colorVar(current)); hero.style.setProperty("--hero-ink",inkVar(current));
+      eyebrowTxt="Agora"; labelTxt=current.period.toUpperCase(); dot.classList.add("pulse");
+      setText(time,current.time); setText(desc,janela(current)); setMeta(badges(current),late); showCta(current,"Abrir lista das");
+    } else if(late.length){ var b=late[0]; hero.style.setProperty("--hero-color","var(--warn)"); hero.style.setProperty("--hero-ink","var(--warn)");
+      eyebrowTxt="Atenção"; labelTxt="ATRASADO — "+b.period.toUpperCase(); dot.classList.remove("pulse");
+      setText(time,b.time); setText(desc,"O horário das "+b.time+" já passou e ainda não foi marcado como dado."); setMeta('<span class="badge badge-warn">Verificar agora</span>',late.slice(1)); showCta(b,"Ver bloco das");
+    } else if(upcoming.length){ var b2=upcoming[0]; hero.style.setProperty("--hero-color",colorVar(b2)); hero.style.setProperty("--hero-ink",inkVar(b2));
+      eyebrowTxt="Próximo"; labelTxt=b2.period.toUpperCase(); dot.classList.remove("pulse");
+      setText(time,b2.time); setText(desc,"Em "+minutesLabel(toMin(b2.time)-n)+". Alimento: "+b2.alimento+"."); setMeta(badges(b2),late); showCta(b2,"Ver lista das");
+    } else { hero.style.setProperty("--hero-color","var(--good)"); hero.style.setProperty("--hero-ink","var(--good)");
+      eyebrowTxt="Dia"; labelTxt="TUDO CERTO POR HOJE"; dot.classList.remove("pulse");
+      setText(time,"✓"); setText(desc,"Todos os blocos de hoje foram marcados como dados."); setMeta('<span class="badge badge-good">Concluído</span>',[]); cta.hidden=true;
+    }
+    setText(eyebrow,eyebrowTxt); setText(label,labelTxt);
+    if(labelTxt!==lastHeroLabel){ if(lastHeroLabel!==null) announce(eyebrowTxt+": "+labelTxt+", "+time.textContent); lastHeroLabel=labelTxt; }
+  }
+
+  // ---------- RENDER: progress ----------
+  function renderProgress(){
+    var blocks=sortedBlocks();
+    var done=blocks.filter(function(b){return isDone(b.id);}).length;
+    document.getElementById("progress-count").innerHTML=done+' <span>de '+blocks.length+'</span>';
+    var segs=document.getElementById("segments"),labels=document.getElementById("seg-labels");
+    segs.innerHTML=""; labels.innerHTML="";
+    blocks.forEach(function(b){
+      var s=document.createElement("div"); s.className="seg"+(isDone(b.id)?" on":""); s.style.setProperty("--seg-color",colorVar(b)); segs.appendChild(s);
+      var l=document.createElement("div"); l.className="seg-label"; l.textContent=b.time; labels.appendChild(l);
+    });
+  }
+
+  // ---------- RENDER: blocks ----------
+  function scrollToBlock(id){ var det=document.querySelector('details.block[data-id="'+id+'"]'); if(!det)return; det.open=true;
+    det.scrollIntoView({behavior:prefersReduced()?"auto":"smooth",block:"start"}); }
+  function checkIcon(){ return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>'; }
+  function badgeHtml(b,st){ if(st==="done")return'<span class="badge badge-good">Dado hoje</span>'; if(st==="current")return'<span class="badge" style="background:'+bgVar(b)+';color:'+inkVar(b)+'">Agora</span>'; if(st==="late")return'<span class="badge badge-warn">Atrasado</span>'; return''; }
+  function btnLabel(b,d){ return d?"Bloco das "+b.time+" já marcado como dado. Toque para desmarcar.":"Marcar bloco das "+b.time+" como dado"; }
+  function btnText(b,d){ return d?"Dado ✓ — toque para desmarcar":"Marcar "+b.time+" como dado"; }
+  function blocksSig(n){ return (editMode?"E":"V")+"|"+sortedBlocks().map(function(b){return b.id+":"+b.time+":"+statusOf(b,n)+":"+b.itens.length;}).join("|"); }
+
+  function renderBlocks(n){
+    var sig=blocksSig(n); if(sig===lastBlocksSig) return; lastBlocksSig=sig;
+    var wrap=document.getElementById("blocks");
+    var openIds={}; wrap.querySelectorAll("details.block").forEach(function(d){ if(d.open) openIds[d.dataset.id]=true; });
+    var firstRender=wrap.children.length===0;
+    var focusInfo=null, ae=document.activeElement;
+    if(ae&&wrap.contains(ae)){ var host=ae.closest("details.block"); if(host) focusInfo={id:host.dataset.id, cls:ae.className}; }
+
+    wrap.innerHTML="";
+    sortedBlocks().forEach(function(b){
+      var st=statusOf(b,n);
+      var det=document.createElement("details"); det.className="block"; det.dataset.id=b.id; det.dataset.status=st;
+      det.style.setProperty("--block-color",colorVar(b)); det.style.setProperty("--block-bg",bgVar(b)); det.style.setProperty("--block-ink",inkVar(b));
+      if((st==="current"&&firstRender)||(b.id in openIds)) det.open=true;
+
+      var summary=document.createElement("summary");
+      summary.innerHTML='<span class="b-icon" aria-hidden="true">'+ICONS[b.icon]+'</span>'+
+        '<span class="b-time">'+b.time+'</span>'+
+        '<span class="b-main"><span class="b-period">'+esc(b.period)+'</span><div class="b-count">'+b.itens.length+' medicamento'+(b.itens.length>1?'s':'')+'</div></span>'+
+        '<span class="b-badge">'+badgeHtml(b,st)+'</span><span class="chev" aria-hidden="true"></span>';
+      det.appendChild(summary);
+
+      var body=document.createElement("div"); body.className="block-body";
+      var food=document.createElement("div"); food.className="food-line"; food.innerHTML='<span>Alimento:</span> <strong>'+esc(b.alimento)+'</strong>'; body.appendChild(food);
+      var items=document.createElement("div"); items.className="items";
+      b.itens.forEach(function(it){ var row=document.createElement("div"); row.className="item"+(it.important?" important":"");
+        row.innerHTML='<div><div class="item-name">'+esc(it.nome)+'</div>'+(it.obs?'<div class="item-obs'+(it.important?' important':'')+'">'+esc(it.obs)+'</div>':'')+'</div>'+(it.qtd?'<div class="item-qty">'+esc(it.qtd)+'</div>':''); items.appendChild(row); });
+      body.appendChild(items);
+
+      if(editMode){
+        var er=document.createElement("div"); er.className="edit-row";
+        var eb=document.createElement("button"); eb.type="button"; eb.className="mini-btn"; eb.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4Z"></path></svg> Editar';
+        eb.addEventListener("click",function(e){ e.preventDefault(); openBlockEditor(b.id); });
+        var db=document.createElement("button"); db.type="button"; db.className="mini-btn danger"; db.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path></svg> Apagar';
+        db.addEventListener("click",function(e){ e.preventDefault(); confirmDeleteBlock(b.id); });
+        er.appendChild(eb); er.appendChild(db); body.appendChild(er);
+      } else {
+        var btn=document.createElement("button"); btn.className="mark-btn"; btn.type="button";
+        var done=st==="done"; btn.dataset.done=done?"true":"false"; btn.setAttribute("aria-label",btnLabel(b,done));
+        btn.innerHTML=checkIcon()+"<span>"+btnText(b,done)+"</span>";
+        btn.addEventListener("click",function(){ var nv=!isDone(b.id); setDone(b.id,nv);
+          if(nv && activeAlarmBlock && activeAlarmBlock.id===b.id) closeAlarm();
+          var n2=nowMin(); lastBlocksSig=null; renderBlocks(n2); renderHero(n2); renderProgress();
+          announce(nv?"Bloco das "+b.time+" marcado como dado.":"Bloco das "+b.time+" desmarcado."); });
+        body.appendChild(btn);
+        var ln=document.createElement("p"); ln.className="local-note"; ln.textContent="Marcação salva só neste aparelho e zera no dia seguinte."; body.appendChild(ln);
+      }
+      det.appendChild(body); wrap.appendChild(det);
+    });
+
+    if(focusInfo){ var host2=wrap.querySelector('details.block[data-id="'+focusInfo.id+'"]'); if(host2){ var t=host2.querySelector("summary"); if(t) t.focus(); } }
+  }
+
+  // ---------- static bits ----------
+  function renderStatic(){
+    var legend=document.getElementById("legend");
+    legend.innerHTML=
+      '<div class="legend-row"><span class="swatch" style="background:var(--dawn)"></span><span><strong>Laranja</strong> = manhã cedo</span></div>'+
+      '<div class="legend-row"><span class="swatch" style="background:var(--morning)"></span><span><strong>Azul</strong> = manhã</span></div>'+
+      '<div class="legend-row"><span class="swatch" style="background:var(--afternoon)"></span><span><strong>Dourado</strong> = após almoço</span></div>'+
+      '<div class="legend-row"><span class="swatch" style="background:var(--dusk)"></span><span><strong>Terracota</strong> = fim de tarde</span></div>'+
+      '<div class="legend-row"><span class="swatch" style="background:var(--night)"></span><span><strong>Roxo</strong> = noite</span></div>'+
+      '<div class="legend-row legend-full"><span class="swatch" style="background:var(--warn)"></span><span>Destaque avermelhado = item <strong>IMPORTANTE</strong></span></div>';
+    var pend=SCHEDULE.blocks.some(function(b){ return /a definir/i.test(b.alimento); });
+    var pc=document.getElementById("pending-card");
+    if(pend){ pc.hidden=false; pc.className="info-card pending-note"; pc.innerHTML='<strong>Pendente:</strong> a alimentação da noite ainda vai ser definida pelo Hammis.'; } else pc.hidden=true;
+    document.getElementById("footer-note").innerHTML="Medicamentos, doses e horários conferidos item a item contra a lista fornecida pelo Hammis.<br>Ferramenta de apoio — qualquer dúvida sobre a prescrição, confirmar com o médico responsável.<br>Preparado por Friday para Hammis, Amanda e Marta Farah.";
+  }
+
+  // ---------- MODAL infra ----------
+  var modalPrevFocus=null;
+  function openModal(title, contentEl){
+    var back=document.getElementById("modal-back"), content=document.getElementById("modal-content");
+    document.getElementById("modal-title").textContent=title;
+    content.innerHTML=""; content.appendChild(contentEl);
+    modalPrevFocus=document.activeElement;
+    back.classList.add("open");
+    var first=content.querySelector("input,select,textarea,button"); if(first) setTimeout(function(){first.focus();},60);
+  }
+  function closeModal(){ var back=document.getElementById("modal-back"); back.classList.remove("open");
+    if(modalPrevFocus&&modalPrevFocus.focus) modalPrevFocus.focus(); }
+  document.getElementById("modal-back").addEventListener("click",function(e){ if(e.target===this) closeModal(); });
+  document.addEventListener("keydown",function(e){ if(e.key==="Escape"){ if(document.getElementById("modal-back").classList.contains("open")) closeModal(); } });
+
+  // ---------- BLOCK EDITOR ----------
+  function el(tag, cls, html){ var e=document.createElement(tag); if(cls)e.className=cls; if(html!=null)e.innerHTML=html; return e; }
+  function openBlockEditor(id){
+    var isNew = !id;
+    var b = isNew ? {id:"b"+Date.now(), time:"12:00", period:"Novo horário", icon:"morning", windowReal:false, windowEnd:"", alimento:"Não especificado", itens:[{nome:"",qtd:"",obs:"",important:false}]}
+                  : JSON.parse(JSON.stringify(SCHEDULE.blocks.find(function(x){return x.id===id;})));
+    var form=el("div");
+
+    var fTime=el("div","field");
+    fTime.innerHTML='<div class="row2"><div><label>Horário</label><input type="time" id="f-time" value="'+esc(b.time)+'"></div>'+
+      '<div><label>Ícone / período</label><select id="f-icon"></select></div></div>';
+    form.appendChild(fTime);
+    var sel=fTime.querySelector("#f-icon"); ICON_KEYS.forEach(function(k){ var o=document.createElement("option"); o.value=k; o.textContent=ICON_NAMES[k]; if(k===b.icon)o.selected=true; sel.appendChild(o); });
+
+    var fPeriod=el("div","field"); fPeriod.innerHTML='<label>Nome do período</label><input type="text" id="f-period" value="'+esc(b.period)+'" placeholder="Ex.: Ao acordar">'; form.appendChild(fPeriod);
+    var fAli=el("div","field"); fAli.innerHTML='<label>Alimento / observação do horário</label><input type="text" id="f-ali" value="'+esc(b.alimento)+'" placeholder="Ex.: com alimento">'; form.appendChild(fAli);
+
+    var fWin=el("div","check-row"); fWin.innerHTML='<input type="checkbox" id="f-winreal" '+(b.windowReal?"checked":"")+'><label for="f-winreal" style="margin:0;text-transform:none;font-size:0.9rem;font-weight:600;color:var(--ink)">Tem janela de horário na prescrição (ex.: 12:30 às 13:30)</label>'; form.appendChild(fWin);
+    var fEnd=el("div","field"); fEnd.innerHTML='<label>Fim da janela (se houver)</label><input type="time" id="f-winend" value="'+esc(b.windowEnd||"")+'">'; form.appendChild(fEnd);
+
+    form.appendChild(el("div","field","<label>Medicamentos deste horário</label>"));
+    var medsWrap=el("div"); medsWrap.id="meds-wrap"; form.appendChild(medsWrap);
+    function addMedEditor(m){
+      var me=el("div","med-editor");
+      me.innerHTML='<input type="text" class="m-nome" placeholder="Nome (ex.: Amiodarona 100 mg)" value="'+esc(m.nome)+'">'+
+        '<div class="row2"><input type="text" class="m-qtd" placeholder="Quantidade (ex.: 1 comprimido)" value="'+esc(m.qtd)+'"></div>'+
+        '<input type="text" class="m-obs" placeholder="Observação (ex.: junto com...)" value="'+esc(m.obs)+'">'+
+        '<div class="med-foot"><label class="med-imp"><input type="checkbox" class="m-imp" '+(m.important?"checked":"")+'> Marcar como IMPORTANTE</label>'+
+        '<button type="button" class="sound-play m-del">Remover</button></div>';
+      me.querySelector(".m-del").addEventListener("click",function(){ me.remove(); });
+      medsWrap.appendChild(me);
+    }
+    (b.itens.length?b.itens:[{nome:"",qtd:"",obs:"",important:false}]).forEach(addMedEditor);
+    var addMed=el("button","mini-btn","+ Adicionar medicamento"); addMed.type="button"; addMed.style.width="100%"; addMed.style.marginBottom="0.9rem";
+    addMed.addEventListener("click",function(){ addMedEditor({nome:"",qtd:"",obs:"",important:false}); }); form.appendChild(addMed);
+
+    var actions=el("div","modal-actions");
+    var saveBtn=el("button","btn btn-primary","Salvar"); saveBtn.type="button";
+    var cancelBtn=el("button","btn btn-ghost","Cancelar"); cancelBtn.type="button";
+    cancelBtn.addEventListener("click",closeModal);
+    saveBtn.addEventListener("click",function(){
+      b.time=form.querySelector("#f-time").value||b.time;
+      b.icon=form.querySelector("#f-icon").value;
+      b.period=form.querySelector("#f-period").value.trim()||"Horário";
+      b.alimento=form.querySelector("#f-ali").value.trim()||"Não especificado";
+      b.windowReal=form.querySelector("#f-winreal").checked;
+      b.windowEnd=form.querySelector("#f-winend").value||"";
+      var meds=[]; medsWrap.querySelectorAll(".med-editor").forEach(function(me){
+        var nome=me.querySelector(".m-nome").value.trim(); if(!nome) return;
+        meds.push({nome:nome, qtd:me.querySelector(".m-qtd").value.trim(), obs:me.querySelector(".m-obs").value.trim(), important:me.querySelector(".m-imp").checked});
+      });
+      if(!meds.length){ toast("Adicione ao menos 1 medicamento."); return; }
+      b.itens=meds;
+      if(isNew){ SCHEDULE.blocks.push(b); } else { var idx=SCHEDULE.blocks.findIndex(function(x){return x.id===id;}); SCHEDULE.blocks[idx]=b; }
+      persistSchedule(); lastBlocksSig=null; lastMetaSig=null; renderStatic(); fullRender(); closeModal();
+      toast(isNew?"Horário adicionado.":"Horário atualizado."); announce("Alterações salvas.");
+    });
+    actions.appendChild(saveBtn); actions.appendChild(cancelBtn); form.appendChild(actions);
+    openModal(isNew?"Novo horário":"Editar "+b.time, form);
+  }
+  function confirmDeleteBlock(id){
+    var b=SCHEDULE.blocks.find(function(x){return x.id===id;}); if(!b) return;
+    var c=el("div");
+    c.appendChild(el("p","helper","Tem certeza que quer apagar o horário das <strong>"+esc(b.time)+" — "+esc(b.period)+"</strong> e seus "+b.itens.length+" medicamento(s)? Isso não pode ser desfeito."));
+    var actions=el("div","modal-actions");
+    var del=el("button","btn btn-danger","Apagar"); del.type="button";
+    var cancel=el("button","btn btn-ghost","Cancelar"); cancel.type="button"; cancel.addEventListener("click",closeModal);
+    del.addEventListener("click",function(){ SCHEDULE.blocks=SCHEDULE.blocks.filter(function(x){return x.id!==id;}); persistSchedule();
+      lastBlocksSig=null; lastMetaSig=null; renderStatic(); fullRender(); closeModal(); toast("Horário apagado."); });
+    actions.appendChild(del); actions.appendChild(cancel); c.appendChild(actions);
+    openModal("Apagar horário", c);
+  }
+
+  // ---------- TOOLS modal ----------
+  function openTools(){
+    var c=el("div");
+    // alarm settings
+    c.appendChild(el("div","field","<label>Som do alarme (gerado, funciona offline)</label>"));
+    var radios=el("div","radio-list");
+    Object.keys(SOUNDS).forEach(function(k){
+      var item=el("label","radio-item"+(ALARM.sound===k?" sel":""));
+      item.innerHTML='<input type="radio" name="snd" value="'+k+'" '+(ALARM.sound===k?"checked":"")+'><span>'+SOUNDS[k].name+'</span><button type="button" class="sound-play" data-play="'+k+'">▶ ouvir</button>';
+      radios.appendChild(item);
+    });
+    c.appendChild(radios);
+    radios.addEventListener("click",function(e){
+      var play=e.target.getAttribute("data-play");
+      if(play){ e.preventDefault(); ensureAudio(); SOUNDS[play].play(); return; }
+    });
+    radios.addEventListener("change",function(e){ if(e.target.name==="snd"){ ALARM.sound=e.target.value; save(STORE_ALARM,ALARM);
+      radios.querySelectorAll(".radio-item").forEach(function(it){ it.classList.toggle("sel", it.querySelector("input").checked); }); } });
+
+    var vib=el("div","check-row"); vib.innerHTML='<input type="checkbox" id="f-vib" '+(ALARM.vibrate?"checked":"")+'><label for="f-vib" style="margin:0;text-transform:none;font-size:0.9rem;font-weight:600;color:var(--ink)">Vibrar junto (Android)</label>';
+    vib.querySelector("input").addEventListener("change",function(e){ ALARM.vibrate=e.target.checked; save(STORE_ALARM,ALARM); });
+    c.appendChild(vib);
+
+    c.appendChild(el("hr").cloneNode());
+    // calendar
+    c.appendChild(el("div","field","<label>Calendário nativo (.ics)</label>"));
+    c.appendChild(el("p","helper","Baixa um arquivo com os "+SCHEDULE.blocks.length+" horários. Abra/importe no Google Agenda ou Apple Agenda: ele cria lembretes que tocam com o som e a notificação nativos do próprio celular, todo dia, offline. Reimporte depois de editar os horários."));
+    var icsBtn=el("button","btn btn-primary","Baixar calendário (.ics)"); icsBtn.type="button"; icsBtn.style.marginBottom="1.1rem";
+    icsBtn.addEventListener("click",downloadICS); c.appendChild(icsBtn);
+
+    // clock guide
+    c.appendChild(el("div","field","<label>Alarme alto no app Relógio</label>"));
+    c.appendChild(el("p","helper","O único alarme que acorda com o celular guardado/no silêncio é o do app Relógio nativo. Crie um alarme repetido para cada horário:"));
+    var chips=el("div","times-chips"); sortedBlocks().forEach(function(b){ chips.appendChild(el("span","time-chip",b.time)); }); c.appendChild(chips);
+    var guide=el("div");
+    guide.appendChild(step(1,"<strong>iPhone:</strong> app Relógio → Alarme → + → defina a hora → Repetir: Todos os dias → salve. Repita para cada horário."));
+    guide.appendChild(step(2,"<strong>Android:</strong> app Relógio → Alarme → + → defina a hora → marque os 7 dias → escolha o som → salve."));
+    guide.appendChild(step(3,"Dica: no rótulo do alarme, escreva o que dar (ex.: “06:30 — Levotiroxina + Rosuvastatina/Ezetimiba”)."));
+    c.appendChild(guide);
+
+    c.appendChild(el("hr").cloneNode());
+    // backup
+    c.appendChild(el("div","field","<label>Backup / compartilhar a lista</label>"));
+    c.appendChild(el("p","helper","Exporte a lista como arquivo pra guardar ou mandar pra outro celular da família. Importe pra carregar a mesma lista em outro aparelho."));
+    var brow=el("div","modal-actions");
+    var exp=el("button","btn btn-ghost","Exportar"); exp.type="button"; exp.addEventListener("click",exportConfig);
+    var imp=el("button","btn btn-ghost","Importar"); imp.type="button"; imp.addEventListener("click",importConfig);
+    brow.appendChild(exp); brow.appendChild(imp); c.appendChild(brow);
+
+    var reset=el("button","btn btn-ghost","Restaurar lista original"); reset.type="button"; reset.style.marginTop="0.6rem"; reset.style.width="100%";
+    reset.addEventListener("click",function(){ if(confirm("Restaurar a lista original do Hammis? Suas edições serão perdidas.")){ SCHEDULE=seedSchedule(); persistSchedule(); lastBlocksSig=null; lastMetaSig=null; renderStatic(); fullRender(); closeModal(); toast("Lista original restaurada."); } });
+    c.appendChild(reset);
+
+    var closeb=el("div","modal-actions"); var cb=el("button","btn btn-primary","Fechar"); cb.type="button"; cb.addEventListener("click",closeModal); closeb.appendChild(cb); c.appendChild(closeb);
+    openModal("Alarmes, calendário e backup", c);
+  }
+  function step(n,html){ var s=el("div","step"); s.innerHTML='<span class="step-n">'+n+'</span><span>'+html+'</span>'; return s; }
+
+  // ---------- .ics ----------
+  function icsEscape(s){ return (s||"").replace(/\\/g,"\\\\").replace(/;/g,"\\;").replace(/,/g,"\\,").replace(/\n/g,"\\n"); }
+  function fold(line){ var out=""; while(line.length>73){ out+=line.slice(0,73)+"\r\n "; line=line.slice(73); } return out+line; }
+  function buildICS(){
+    var d=new Date(), y=d.getFullYear(), mo=pad(d.getMonth()+1), da=pad(d.getDate());
+    var L=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Friday//Remedios Pai//PT-BR","CALSCALE:GREGORIAN","METHOD:PUBLISH"];
+    sortedBlocks().forEach(function(b){
+      var p=b.time.split(":"), dt=y+mo+da+"T"+p[0]+p[1]+"00";
+      var meds=b.itens.map(function(i){ return "• "+i.nome+(i.qtd?" ("+i.qtd+")":"")+(i.obs?" — "+i.obs:""); }).join("\n");
+      var desc="Alimento: "+b.alimento+"\n"+meds;
+      L.push("BEGIN:VEVENT");
+      L.push("UID:remedio-"+b.id+"-"+b.time.replace(":","")+"@friday-farah");
+      L.push("DTSTAMP:"+y+mo+da+"T000000Z");
+      L.push(fold("DTSTART:"+dt));
+      L.push("RRULE:FREQ=DAILY");
+      L.push(fold("SUMMARY:"+icsEscape("Remédio "+b.time+" — "+b.period)));
+      L.push(fold("DESCRIPTION:"+icsEscape(desc)));
+      L.push("BEGIN:VALARM");
+      L.push("ACTION:DISPLAY");
+      L.push(fold("DESCRIPTION:"+icsEscape("Hora do remédio das "+b.time)));
+      L.push("TRIGGER:PT0M");
+      L.push("END:VALARM");
+      L.push("END:VEVENT");
+    });
+    L.push("END:VCALENDAR");
+    return L.join("\r\n");
+  }
+  function downloadBlob(content, filename, type){
+    var blob=new Blob([content],{type:type}); var url=URL.createObjectURL(blob);
+    var a=document.createElement("a"); a.href=url; a.download=filename; document.body.appendChild(a); a.click();
+    setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); },500);
+  }
+  function downloadICS(){ downloadBlob(buildICS(),"remedios-pai.ics","text/calendar;charset=utf-8"); toast("Calendário baixado. Abra o arquivo pra importar."); }
+
+  // ---------- config export/import ----------
+  function exportConfig(){ downloadBlob(JSON.stringify(SCHEDULE,null,2),"remedios-lista.json","application/json"); toast("Lista exportada."); }
+  function importConfig(){
+    var inp=document.createElement("input"); inp.type="file"; inp.accept=".json,application/json";
+    inp.addEventListener("change",function(){ var f=inp.files[0]; if(!f)return; var r=new FileReader();
+      r.onload=function(){ try{ var obj=JSON.parse(r.result); if(!obj.blocks||!obj.blocks.length) throw 0;
+        SCHEDULE=obj; persistSchedule(); lastBlocksSig=null; lastMetaSig=null; renderStatic(); fullRender(); closeModal(); toast("Lista importada."); }
+        catch(e){ toast("Arquivo inválido."); } };
+      r.readAsText(f); });
+    inp.click();
+  }
+
+  // ---------- edit mode ----------
+  function setEditMode(on){
+    editMode=on;
+    document.getElementById("btn-edit").classList.toggle("active",on);
+    document.getElementById("btn-edit").setAttribute("aria-pressed",on?"true":"false");
+    document.getElementById("edit-banner").hidden=!on;
+    document.getElementById("add-block").hidden=!on;
+    document.getElementById("blocks-hint").textContent = on ? "" : "";
+    lastBlocksSig=null; renderBlocks(nowMin());
+  }
+
+  // ---------- alarms enable ----------
+  function enableAlarms(){
+    ensureAudio();
+    // unlock with a near-silent blip
+    try{ beep([440],0.05,"sine",0.001); }catch(e){}
+    ALARM.enabled=true; save(STORE_ALARM,ALARM);
+    var btn=document.getElementById("btn-alarms");
+    btn.classList.add("alarm-on"); btn.setAttribute("aria-pressed","true");
+    document.getElementById("btn-alarms-text").textContent="Alarmes ligados";
+    if("Notification" in window && Notification.permission==="default"){ Notification.requestPermission().catch(function(){}); }
+    toast("Alarmes ligados neste aparelho. Deixe o app aberto para tocar na hora.");
+  }
+  function refreshAlarmBtn(){
+    var btn=document.getElementById("btn-alarms");
+    if(ALARM.enabled){ btn.classList.add("alarm-on"); btn.setAttribute("aria-pressed","true"); document.getElementById("btn-alarms-text").textContent="Alarmes ligados"; }
+  }
+
+  // ---------- full render ----------
+  function fullRender(){ var n=nowMin(); renderHero(n); renderProgress(); renderBlocks(n); }
+  function tick(){ setText(document.getElementById("clock"),fmtClock()); setText(document.getElementById("dateline"),fmtDate());
+    fullRender(); checkAlarms(); }
+
+  // ---------- SW (only works when hosted; harmless elsewhere) ----------
+  function registerSW(){ if("serviceWorker" in navigator){ try{ navigator.serviceWorker.register("sw.js").catch(function(){}); }catch(e){} } }
+
+  // ---------- wire ----------
+  function init(){
+    loadSchedule();
+    ALARM=load(STORE_ALARM,{enabled:false,sound:"sino",vibrate:true,snoozeMin:10});
+    if(!ALARM.sound) ALARM.sound="sino";
+    initTheme(); renderStatic(); fullRender(); refreshAlarmBtn();
+
+    document.querySelectorAll("[data-theme-set]").forEach(function(b){ b.addEventListener("click",function(){ applyTheme(b.getAttribute("data-theme-set")); }); });
+    document.getElementById("btn-edit").addEventListener("click",function(){ setEditMode(!editMode); });
+    document.getElementById("btn-tools").addEventListener("click",openTools);
+    document.getElementById("btn-alarms").addEventListener("click",function(){ if(ALARM.enabled){ openTools(); } else { enableAlarms(); } });
+    document.getElementById("add-block").addEventListener("click",function(){ openBlockEditor(null); });
+
+    document.getElementById("alarm-taken").addEventListener("click",function(){ if(activeAlarmBlock){ setDone(activeAlarmBlock.id,true); var id=activeAlarmBlock.id; closeAlarm(); lastBlocksSig=null; fullRender(); var bb=SCHEDULE.blocks.find(function(x){return x.id===id;}); toast("Marcado como dado."); } });
+    document.getElementById("alarm-snooze").addEventListener("click",function(){ if(activeAlarmBlock){ snoozes[activeAlarmBlock.id]=nowMin()+(ALARM.snoozeMin||10); closeAlarm(); toast("Soneca de "+(ALARM.snoozeMin||10)+" min."); } });
+    document.getElementById("alarm-stop").addEventListener("click",closeAlarm);
+
+    tick(); setInterval(tick,15000);
+    document.addEventListener("visibilitychange",function(){ if(!document.hidden){ if(audioCtx&&audioCtx.state==="suspended")audioCtx.resume(); tick(); } });
+    window.addEventListener("pageshow",function(){ tick(); });
+    registerSW();
+    window.__t=tick; window.__fireAlarm=fireAlarm; window.__SCHEDULE=function(){return SCHEDULE;};
+  }
+
+  if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",init); else init();
+})();
+</script>
+</body>
+</html>
