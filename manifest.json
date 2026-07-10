@@ -1,7 +1,7 @@
 {
-  "name": "Remédios do Pai — Família Farah",
+  "name": "Lembrete de Remédios",
   "short_name": "Remédios",
-  "description": "Cronograma de medicamentos com alarmes, edição e calendário.",
+  "description": "App para organizar horários de medicamentos, com alarmes e calendário.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

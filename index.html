@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Remédios do Pai — Família Farah</title>
-<meta name="description" content="Cronograma de medicamentos com alarmes, edição e calendário.">
+<title>Lembrete de Remédios</title>
+<meta name="description" content="App para organizar horários de medicamentos, com alarmes e calendário.">
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#7A3B49">
 <meta name="mobile-web-app-capable" content="yes">
@@ -373,7 +373,7 @@
   <div class="topbar">
     <div class="wrap">
       <div class="topbar-inner">
-        <h1 class="word">Remédios do Pai<small>Família Farah</small></h1>
+        <h1 class="word">Lembrete de Remédios<small>Cronograma pessoal</small></h1>
         <div class="clockbox">
           <div class="clock" id="clock">--:--</div>
           <div class="dateline" id="dateline">&nbsp;</div>
@@ -504,49 +504,11 @@
   var PERIOD_COLORS = {dawn:"--dawn",morning:"--morning",afternoon:"--afternoon",dusk:"--dusk",night:"--night"};
 
   function seedSchedule(){
-    return {
-      version:2,
-      blocks:[
-        {id:"b0630", time:"06:30", period:"Ao acordar", icon:"dawn", windowReal:false, windowEnd:"08:00",
-         alimento:"Não especificado na prescrição",
-         itens:[
-           {nome:"Levotiroxina sódica 75 mg", qtd:"1 comprimido", obs:"", important:false},
-           {nome:"Rosuvastatina 20 mg", qtd:"1 comprimido", obs:"JUNTO com a Ezetimiba", important:false},
-           {nome:"Ezetimiba", qtd:"1 comprimido", obs:"JUNTO com a Rosuvastatina", important:false}
-         ]},
-        {id:"b0900", time:"09:00", period:"Manhã", icon:"morning", windowReal:false, windowEnd:"10:30",
-         alimento:"Não especificado na prescrição",
-         itens:[
-           {nome:"Bisoprolol 5 mg", qtd:"2 comprimidos", obs:"", important:false},
-           {nome:"Sertralina 50 mg", qtd:"2 comprimidos", obs:"", important:false},
-           {nome:"Amiodarona 100 mg", qtd:"1 comprimido", obs:"", important:false},
-           {nome:"Piridostigmina 60 mg", qtd:"1 comprimido", obs:"", important:false},
-           {nome:"Apixabana 5 mg", qtd:"1/2 comprimido", obs:"Cortar 1 comprimido ao meio. 1ª dose (2x ao dia, a cada 12h)", important:false},
-           {nome:"Furosemida 40 mg", qtd:"1 comprimido", obs:"", important:false},
-           {nome:"Bicarbonato de sódio", qtd:"1 colher de chá diluída em 50 ml de água", obs:"IMPORTANTE", important:true}
-         ]},
-        {id:"b1230", time:"12:30", period:"Após o almoço", icon:"afternoon", windowReal:true, windowEnd:"13:30",
-         alimento:"COM alimento — após o almoço (12:30 às 13:30)",
-         itens:[
-           {nome:"Aciclovir 200 mg", qtd:"1 comprimido", obs:"", important:false},
-           {nome:"Deflazacort 30 mg", qtd:"3 comprimidos", obs:"", important:false},
-           {nome:"Complexo B + ácido fólico", qtd:"", obs:"TOMAR ATÉ TERMINAR (quantidade não especificada na lista)", important:false}
-         ]},
-        {id:"b1630", time:"16:30", period:"Final da tarde", icon:"dusk", windowReal:false, windowEnd:"18:00",
-         alimento:"Não especificado na prescrição",
-         itens:[
-           {nome:"Piridostigmina 60 mg", qtd:"1 comprimido", obs:"", important:false}
-         ]},
-        {id:"b2030", time:"20:30", period:"Noite", icon:"night", windowReal:true, windowEnd:"21:30",
-         alimento:"A definir pelo Hammis (seção de alimentação da noite pendente)",
-         itens:[
-           {nome:"Bicarbonato de sódio", qtd:"1 colher de chá diluída em 50 ml de água", obs:"IMPORTANTE", important:true},
-           {nome:"Piridostigmina 60 mg (vidrinho)", qtd:"1 comprimido", obs:"", important:false},
-           {nome:"Amiodarona 100 mg", qtd:"1 comprimido", obs:"", important:false},
-           {nome:"Apixabana", qtd:"1/2 comprimido", obs:"2ª dose, 12h após a 1ª", important:false}
-         ]}
-      ]
-    };
+    return { version:2, blocks:[
+      {id:"exemplo", time:"08:00", period:"Exemplo", icon:"morning", windowReal:false, windowEnd:"",
+       alimento:"Toque em Mais e depois Importar para carregar a sua lista, ou em Editar para montar do zero.",
+       itens:[{nome:"Exemplo de remédio", qtd:"1 comprimido", obs:"Isto é só um exemplo — importe ou edite a sua lista.", important:false}]}
+    ]};
   }
 
   // ---------- state ----------
@@ -858,8 +820,8 @@
       '<div class="legend-row legend-full"><span class="swatch" style="background:var(--warn)"></span><span>Destaque avermelhado = item <strong>IMPORTANTE</strong></span></div>';
     var pend=SCHEDULE.blocks.some(function(b){ return /a definir/i.test(b.alimento); });
     var pc=document.getElementById("pending-card");
-    if(pend){ pc.hidden=false; pc.className="info-card pending-note"; pc.innerHTML='<strong>Pendente:</strong> a alimentação da noite ainda vai ser definida pelo Hammis.'; } else pc.hidden=true;
-    document.getElementById("footer-note").innerHTML="Medicamentos, doses e horários conferidos item a item contra a lista fornecida pelo Hammis.<br>Ferramenta de apoio — qualquer dúvida sobre a prescrição, confirmar com o médico responsável.<br>Preparado por Friday para Hammis, Amanda e Marta Farah.";
+    if(pend){ pc.hidden=false; pc.className="info-card pending-note"; pc.innerHTML='<strong>Pendente:</strong> a alimentação da noite ainda será definida.'; } else pc.hidden=true;
+    document.getElementById("footer-note").innerHTML="Ferramenta de apoio para organizar horários de medicamentos.<br>Qualquer dúvida sobre a prescrição, confirme com o médico responsável.";
   }
 
   // ---------- MODAL infra ----------
@@ -911,7 +873,7 @@
     var medsWrap=el("div"); medsWrap.id="meds-wrap"; form.appendChild(medsWrap);
     function addMedEditor(m){
       var me=el("div","med-editor");
-      me.innerHTML='<input type="text" class="m-nome" placeholder="Nome (ex.: Amiodarona 100 mg)" value="'+esc(m.nome)+'">'+
+      me.innerHTML='<input type="text" class="m-nome" placeholder="Nome (ex.: Vitamina D 1000 UI)" value="'+esc(m.nome)+'">'+
         '<div class="row2"><input type="text" class="m-qtd" placeholder="Quantidade (ex.: 1 comprimido)" value="'+esc(m.qtd)+'"></div>'+
         '<input type="text" class="m-obs" placeholder="Observação (ex.: junto com...)" value="'+esc(m.obs)+'">'+
         '<div class="med-foot"><label class="med-imp"><input type="checkbox" class="m-imp" '+(m.important?"checked":"")+'> Marcar como IMPORTANTE</label>'+
@@ -997,7 +959,7 @@
     var guide=el("div");
     guide.appendChild(step(1,"<strong>iPhone:</strong> app Relógio → Alarme → + → defina a hora → Repetir: Todos os dias → salve. Repita para cada horário."));
     guide.appendChild(step(2,"<strong>Android:</strong> app Relógio → Alarme → + → defina a hora → marque os 7 dias → escolha o som → salve."));
-    guide.appendChild(step(3,"Dica: no rótulo do alarme, escreva o que dar (ex.: “06:30 — Levotiroxina + Rosuvastatina/Ezetimiba”)."));
+    guide.appendChild(step(3,"Dica: no rótulo do alarme, escreva o que dar (ex.: “08:00 — remédio da manhã”)."));
     c.appendChild(guide);
 
     c.appendChild(el("hr").cloneNode());
@@ -1010,7 +972,7 @@
     brow.appendChild(exp); brow.appendChild(imp); c.appendChild(brow);
 
     var reset=el("button","btn btn-ghost","Restaurar lista original"); reset.type="button"; reset.style.marginTop="0.6rem"; reset.style.width="100%";
-    reset.addEventListener("click",function(){ if(confirm("Restaurar a lista original do Hammis? Suas edições serão perdidas.")){ SCHEDULE=seedSchedule(); persistSchedule(); lastBlocksSig=null; lastMetaSig=null; renderStatic(); fullRender(); closeModal(); toast("Lista original restaurada."); } });
+    reset.addEventListener("click",function(){ if(confirm("Restaurar a lista de exemplo? Suas edições serão perdidas.")){ SCHEDULE=seedSchedule(); persistSchedule(); lastBlocksSig=null; lastMetaSig=null; renderStatic(); fullRender(); closeModal(); toast("Lista original restaurada."); } });
     c.appendChild(reset);
 
     var closeb=el("div","modal-actions"); var cb=el("button","btn btn-primary","Fechar"); cb.type="button"; cb.addEventListener("click",closeModal); closeb.appendChild(cb); c.appendChild(closeb);
@@ -1037,7 +999,7 @@
       var meds=b.itens.map(function(i){ return "• "+i.nome+(i.qtd?" ("+i.qtd+")":"")+(i.obs?" — "+i.obs:""); }).join("\n");
       var desc="Alimento: "+b.alimento+"\n"+meds;
       L.push("BEGIN:VEVENT");
-      L.push("UID:remedio-"+b.id+"-"+b.time.replace(":","")+"@friday-farah");
+      L.push("UID:remedio-"+b.id+"-"+b.time.replace(":","")+"@friday-remedios");
       L.push("DTSTAMP:"+y+mo+da+"T000000Z");
       L.push(fold("DTSTART:"+dt));
       L.push("RRULE:FREQ=DAILY");
