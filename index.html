@@ -569,7 +569,7 @@
     if(!s){ s = seedSchedule(); }
     SCHEDULE = s; save(STORE_SCHEDULE, s);
   }
-  function persistSchedule(){ save(STORE_SCHEDULE, SCHEDULE); }
+  function persistSchedule(){ save(STORE_SCHEDULE, SCHEDULE); syncServerPush(); }
   function sortedBlocks(){ return SCHEDULE.blocks.slice().sort(function(a,b){ return toMin(a.time)-toMin(b.time); }); }
 
   // ---------- time helpers ----------
@@ -996,8 +996,83 @@
   }
 
   // ---------- TOOLS modal ----------
+  // ---------- PUSH 24h (servidor na VDS) ----------
+  var PUSH_SERVER = "https://remedios-papa-2026-familia.duckdns.org";
+  var VAPID_PUBLIC = "BAGQWwNXb6CYwEWJgmauUr15N8OKjIYz7h9MQeL0OyPOnvSeCx6KkZi_vRrKuCZNZejbsIGOAUM470wtp_vz5pg";
+  function urlB64ToUint8(b64){ var pad="=".repeat((4-b64.length%4)%4); var s=(b64+pad).replace(/-/g,"+").replace(/_/g,"/"); var raw=atob(s); var a=new Uint8Array(raw.length); for(var i=0;i<raw.length;i++)a[i]=raw.charCodeAt(i); return a; }
+  function tzName(){ try{ return Intl.DateTimeFormat().resolvedOptions().timeZone || "America/Sao_Paulo"; }catch(e){ return "America/Sao_Paulo"; } }
+  function buildServerPayload(){
+    var reminders = sortedBlocks().map(function(b){
+      var meds=(b.itens||[]).map(function(i){ return i.nome+(i.qtd?(" ("+i.qtd+")"):""); }).join(", ");
+      return { id:b.id, time:b.time, title:"Remédio "+b.time+" — "+b.period, body:meds };
+    });
+    var appts = loadAppts().map(function(a){
+      var atMs=apptTimestamp(a); if(!atMs) return null; var eveMs=eveningBefore(a);
+      return { id:a.id, at:new Date(atMs).toISOString(), eve:eveMs?new Date(eveMs).toISOString():null,
+               title:"Consulta médica"+(a.title?": "+a.title:""), body:((a.local?a.local+" — ":"")+fmtBR(a.date)+" às "+a.time) };
+    }).filter(Boolean);
+    return { reminders:reminders, appts:appts, tz:tzName() };
+  }
+  function refreshPushBtn(){
+    var b=document.getElementById("push-btn"); if(!b) return;
+    var on=localStorage.getItem("remedios-push-on")==="1";
+    b.textContent = on?"Avisos 24h LIGADOS — tocar para desligar":"Ativar avisos 24h neste celular";
+    b.className = "btn "+(on?"btn-ghost":"btn-primary");
+  }
+  function enableServerPush(){
+    if(!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)){
+      toast("Este navegador/telefone não suporta avisos push."); return;
+    }
+    toast("Ativando…");
+    Notification.requestPermission().then(function(perm){
+      if(perm!=="granted"){ toast("Você precisa permitir as notificações."); return; }
+      navigator.serviceWorker.ready.then(function(reg){
+        return reg.pushManager.getSubscription().then(function(sub){
+          return sub || reg.pushManager.subscribe({ userVisibleOnly:true, applicationServerKey:urlB64ToUint8(VAPID_PUBLIC) });
+        });
+      }).then(function(sub){
+        var p=buildServerPayload(); p.subscription=sub; p.name="";
+        return fetch(PUSH_SERVER+"/api/register",{ method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(p) });
+      }).then(function(r){ return r.json(); }).then(function(j){
+        if(j&&j.ok){ localStorage.setItem("remedios-push-on","1"); refreshPushBtn(); toast("Avisos 24h ativados! ("+j.reminders+" horários no servidor)"); }
+        else toast("O servidor não confirmou. Tente de novo.");
+      }).catch(function(e){ toast("Falha ao ativar (servidor/rede)."); });
+    }).catch(function(){ toast("Não consegui pedir a permissão."); });
+  }
+  function disableServerPush(){
+    var off=function(){ localStorage.removeItem("remedios-push-on"); refreshPushBtn(); toast("Avisos 24h desligados neste celular."); };
+    if(!("serviceWorker" in navigator)){ off(); return; }
+    navigator.serviceWorker.ready.then(function(reg){ return reg.pushManager.getSubscription(); }).then(function(sub){
+      if(sub){ fetch(PUSH_SERVER+"/api/unregister",{ method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({endpoint:sub.endpoint}) }).catch(function(){}); sub.unsubscribe().catch(function(){}); }
+      off();
+    }).catch(off);
+  }
+  var syncTimer=null;
+  function syncServerPush(){
+    if(localStorage.getItem("remedios-push-on")!=="1") return;
+    if(!("serviceWorker" in navigator)) return;
+    clearTimeout(syncTimer);
+    syncTimer=setTimeout(function(){
+      navigator.serviceWorker.ready.then(function(reg){ return reg.pushManager.getSubscription(); }).then(function(sub){
+        if(!sub) return; var p=buildServerPayload(); p.subscription=sub; p.name="";
+        return fetch(PUSH_SERVER+"/api/register",{ method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(p) });
+      }).catch(function(){});
+    }, 1200);
+  }
+
   function openTools(){
     var c=el("div");
+
+    // ----- Avisos 24h (servidor) -----
+    c.appendChild(el("div","field","<label>Avisos automáticos 24h — mesmo com o app fechado</label>"));
+    c.appendChild(el("p","helper","Liga a notificação que toca no celular na hora certa <strong>mesmo com o app fechado e a tela bloqueada</strong>, pelo servidor. <strong>No iPhone</strong>: só funciona com o app instalado pela Tela de Início (Safari) e depois de permitir as notificações."));
+    var pOn = localStorage.getItem("remedios-push-on")==="1";
+    var pushBtn = el("button", "btn "+(pOn?"btn-ghost":"btn-primary"), pOn?"Avisos 24h LIGADOS — tocar para desligar":"Ativar avisos 24h neste celular");
+    pushBtn.type="button"; pushBtn.id="push-btn";
+    pushBtn.addEventListener("click",function(){ if(localStorage.getItem("remedios-push-on")==="1") disableServerPush(); else enableServerPush(); });
+    c.appendChild(pushBtn);
+    var hrp=document.createElement("hr"); hrp.style.cssText="border:none;border-top:1px solid var(--line);margin:1.1rem 0;"; c.appendChild(hrp);
+
 
     // ----- Relatorio e historico -----
     c.appendChild(el("div","field","<label>Relatório e histórico</label>"));
@@ -1253,7 +1328,7 @@
 
   // ---------- CONSULTAS MEDICAS ----------
   function loadAppts(){ var a=load(STORE_APPTS,[]); return Array.isArray(a)?a:[]; }
-  function saveAppts(a){ save(STORE_APPTS, a); }
+  function saveAppts(a){ save(STORE_APPTS, a); syncServerPush(); }
   function isDateStr(v){ return typeof v==="string" && /^\d{4}-\d{2}-\d{2}$/.test(v); }
   function apptTimestamp(a){ if(!isDateStr(a.date)||!isHHMM(a.time)) return 0; var t=a.time.length===4?"0"+a.time:a.time; var d=new Date(a.date+"T"+t+":00"); return isNaN(d)?0:d.getTime(); }
   function eveningBefore(a){ if(!isDateStr(a.date)) return 0; var d=new Date(a.date+"T19:00:00"); if(isNaN(d)) return 0; d.setDate(d.getDate()-1); return d.getTime(); }
