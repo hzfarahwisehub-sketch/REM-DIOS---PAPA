@@ -473,8 +473,8 @@
               <div class="legend-grid" id="legend"></div>
             </div>
             <div class="info-card" id="pending-card" hidden></div>
-            <div class="info-card">
-              <strong>Alarme no celular:</strong> este app avisa por som e vibração enquanto estiver aberto. Para o alarme tocar sozinho na hora certa mesmo com o celular guardado, use o botão <strong>"Mais"</strong> e configure o <strong>calendário</strong> ou os <strong>alarmes do Relógio</strong>.
+            <div class="info-card pending-note">
+              <strong>Para o alarme tocar sozinho (app fechado):</strong> como todo app de navegador, este só toca som com ele <strong>aberto na tela</strong>. Para o aviso soar sozinho — com o celular guardado, bloqueado e sem depender de nada — configure os <strong>alarmes do app Relógio</strong> do celular (o mais confiável) ou importe o <strong>calendário</strong>. Tudo no botão <strong>"Mais"</strong>. O app é o painel de controle; o alarme "pra valer" fica no próprio celular.
             </div>
           </section>
 
@@ -1064,13 +1064,20 @@
     icsBtn.addEventListener("click",downloadICS); c.appendChild(icsBtn);
 
     // clock guide
-    c.appendChild(el("div","field","<label>Alarme alto no app Relógio</label>"));
-    c.appendChild(el("p","helper","O único alarme que acorda com o celular guardado/no silêncio é o do app Relógio nativo. Crie um alarme repetido para cada horário:"));
-    var chips=el("div","times-chips"); sortedBlocks().forEach(function(b){ chips.appendChild(el("span","time-chip",b.time)); }); c.appendChild(chips);
+    c.appendChild(el("div","field","<label>Alarme de verdade — toca com o app fechado</label>"));
+    c.appendChild(el("p","helper","<strong>Este é o alarme independente que você quer.</strong> O app Relógio do próprio celular toca alto mesmo com o aparelho guardado, bloqueado, sem internet e sem depender de nada. Crie um alarme <strong>repetido (todos os dias)</strong> para cada horário abaixo — pode copiar o rótulo:"));
+    var list=el("div"); list.style.cssText="display:flex;flex-direction:column;gap:0.4rem;margin:0.4rem 0 0.9rem;";
+    sortedBlocks().forEach(function(b){
+      var meds=(b.itens||[]).map(function(i){return i.nome;}).join(", ");
+      var row=el("div"); row.style.cssText="background:var(--paper-sunken);border:1px solid var(--line);border-radius:8px;padding:0.5rem 0.7rem;font-size:0.84rem;line-height:1.4;";
+      row.innerHTML="<strong style='font-variant-numeric:tabular-nums'>"+b.time+"</strong>"+(meds?" — "+esc(meds):"");
+      list.appendChild(row);
+    });
+    c.appendChild(list);
     var guide=el("div");
-    guide.appendChild(step(1,"<strong>iPhone:</strong> app Relógio → Alarme → + → defina a hora → Repetir: Todos os dias → salve. Repita para cada horário."));
-    guide.appendChild(step(2,"<strong>Android:</strong> app Relógio → Alarme → + → defina a hora → marque os 7 dias → escolha o som → salve."));
-    guide.appendChild(step(3,"Dica: no rótulo do alarme, escreva o que dar (ex.: “08:00 — remédio da manhã”)."));
+    guide.appendChild(step(1,"<strong>iPhone:</strong> app Relógio → Alarme → + → hora → <strong>Repetir: Todos os dias</strong> → Rótulo (copie da lista) → Salvar. Repita para cada horário."));
+    guide.appendChild(step(2,"<strong>Android:</strong> app Relógio → Alarme → + → hora → marque os 7 dias → som → rótulo → Salvar."));
+    guide.appendChild(step(3,"Feito uma vez, esses alarmes tocam sozinhos todo dia, para sempre, sem precisar abrir este app."));
     c.appendChild(guide);
 
     c.appendChild(el("hr").cloneNode());
