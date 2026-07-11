@@ -689,7 +689,7 @@
 
   // ---------- ALARM overlay ----------
   function fireAlarm(b){
-    if(activeAlarmBlock) return;
+    if(activeAlarmBlock || activeAppt) return;
     activeAlarmBlock=b;
     var ov=document.getElementById("alarm-overlay");
     ov.style.setProperty("--alarm-color", colorVar(b));
@@ -738,7 +738,7 @@
     pendingAlarms.push(b);
   }
   function drainQueue(){
-    if(activeAlarmBlock) return;
+    if(activeAlarmBlock || activeAppt) return;
     while(pendingAlarms.length){ var b=pendingAlarms.shift(); if(b && !isDone(b.id)){ fireAlarm(b); return; } }
   }
   function checkAlarms(){
@@ -1256,7 +1256,10 @@
     for(var i=0;i<appts.length;i++){
       var a=appts[i], apptTs=apptTimestamp(a); if(!apptTs) continue;
       if(now>=apptTs) continue; // consulta ja passou
-      var rems=[ {k:"24h", ts:apptTs-24*3600*1000}, {k:"eve", ts:eveningBefore(a)} ];
+      var du=daysUntil(a);
+      // consulta hoje: um unico aviso (nao faz sentido "vespera 19h" de algo que e hoje)
+      var rems = (du!=null && du<=0) ? [ {k:"24h", ts:apptTs-24*3600*1000} ]
+                                     : [ {k:"24h", ts:apptTs-24*3600*1000}, {k:"eve", ts:eveningBefore(a)} ];
       for(var j=0;j<rems.length;j++){
         var rem=rems[j]; if(!rem.ts) continue;
         if(isApptAcked(a.id, rem.k)) continue;
@@ -1272,7 +1275,9 @@
     var ov=document.getElementById("alarm-overlay");
     ov.style.setProperty("--alarm-color", "var(--accent)");
     document.getElementById("alarm-time").textContent=a.time;
-    document.getElementById("alarm-title").textContent = kind==="eve" ? "CONSULTA MÉDICA AMANHÃ" : "CONSULTA MÉDICA EM 24 H";
+    var du=daysUntil(a);
+    document.getElementById("alarm-title").textContent = (du!=null&&du<=0) ? "CONSULTA MÉDICA HOJE"
+      : (du===1 ? "CONSULTA MÉDICA AMANHÃ" : ("CONSULTA MÉDICA EM "+du+" DIAS"));
     var ul=document.getElementById("alarm-meds"); ul.innerHTML="";
     var li=document.createElement("li");
     li.innerHTML="<b>"+esc(a.title||"Consulta médica")+"</b><br><span style='opacity:.9'>"+fmtBR(a.date)+" às "+a.time+"</span>"+(a.local?"<br><span style='opacity:.85'>"+esc(a.local)+"</span>":"")+"<br><br>Fique preparado para a sua consulta médica.";
@@ -1325,9 +1330,12 @@
     saveBtn.addEventListener("click",function(){
       var date=form.querySelector("#ap-date").value, time=form.querySelector("#ap-time").value||"09:00";
       if(!isDateStr(date)){ toast("Escolha a data da consulta."); return; }
+      var prevDate=a.date, prevTime=a.time;
+      var testTs=apptTimestamp({date:date, time:time});
+      if(testTs && testTs < Date.now()){ toast("Essa data já passou — confira o dia."); return; }
       a.date=date; a.time=time; a.title=form.querySelector("#ap-title").value.trim(); a.local=form.querySelector("#ap-local").value.trim();
-      // ao mudar data/hora, limpar acks/snoozes antigos para os avisos voltarem a valer
-      ["24h","eve"].forEach(function(k){ try{ localStorage.removeItem(apptAckKey(a.id,k)); localStorage.removeItem(apptSnzKey(a.id,k)); }catch(e){} });
+      // so re-armar os avisos se a DATA/HORA mudou (editar titulo/local nao re-dispara alarme ja confirmado)
+      if(isNew || prevDate!==date || prevTime!==time){ ["24h","eve"].forEach(function(k){ try{ localStorage.removeItem(apptAckKey(a.id,k)); localStorage.removeItem(apptSnzKey(a.id,k)); }catch(e){} }); }
       var appts=loadAppts();
       if(isNew){ appts.push(a); logEvent("appt-add", null, "Consulta adicionada: "+(a.title||"consulta")+" em "+fmtBR(a.date)+" "+a.time); }
       else { var idx=appts.findIndex(function(x){return x.id===a.id;}); if(idx<0){ appts.push(a); } else appts[idx]=a; logEvent("appt-edit", null, "Consulta alterada: "+(a.title||"consulta")+" para "+fmtBR(a.date)+" "+a.time); }
@@ -1340,6 +1348,7 @@
     var a=loadAppts().find(function(x){return x.id===id;}); if(!a) return;
     var c=el("div");
     c.appendChild(el("p","helper","Apagar a consulta <strong>"+esc(a.title||"médica")+"</strong> de "+fmtBR(a.date)+" às "+a.time+"?"));
+    c.appendChild(el("p","helper","<strong>Atenção:</strong> se você já importou o calendário (.ics) no celular, apague este evento também no app de calendário — o app não consegue removê-lo de lá automaticamente."));
     var actions=el("div","modal-actions");
     var del=el("button","btn btn-danger","Apagar"); del.type="button";
     var cancel=el("button","btn btn-ghost","Cancelar"); cancel.type="button"; cancel.addEventListener("click",closeModal);
