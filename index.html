@@ -246,6 +246,22 @@
     padding:0.7rem 0.9rem; font-size:0.84rem; color:var(--ink); margin-bottom:0.9rem; display:flex; gap:0.5rem; align-items:center;}
   .edit-banner strong{color:var(--accent);}
 
+  /* ---------- CONSULTAS ---------- */
+  .appts{display:flex; flex-direction:column; gap:0.6rem; margin-bottom:0.7rem;}
+  .appt-card{display:flex; justify-content:space-between; gap:0.8rem; align-items:flex-start;
+    background:var(--paper-raised); border:1px solid var(--line); border-left:6px solid var(--accent);
+    border-radius:var(--radius-md); padding:0.8rem 0.9rem; box-shadow:var(--shadow-sm);}
+  .appt-card.soon{border-left-color:var(--warn);}
+  .appt-main{min-width:0;}
+  .appt-title{font-weight:700; font-size:0.98rem;}
+  .appt-when{font-size:0.85rem; color:var(--ink-soft); margin-top:0.15rem;}
+  .appt-when b{color:var(--accent);}
+  .appt-card.soon .appt-when b{color:var(--warn);}
+  .appt-local{font-size:0.82rem; color:var(--ink-soft); margin-top:0.2rem;}
+  .appt-acts{display:flex; flex-direction:column; gap:0.35rem; flex-shrink:0;}
+  .appt-acts .mini-btn{min-height:38px; padding:0.3rem 0.7rem; font-size:0.78rem;}
+  .appts-empty{font-size:0.85rem; color:var(--ink-soft); padding:0.3rem 0.1rem;}
+
   /* ---------- INFO / LEGEND ---------- */
   .info-card{background:var(--paper-raised); border:1px solid var(--line); border-radius:var(--radius-md);
     padding:1rem 1.15rem; box-shadow:var(--shadow-sm); font-size:0.85rem; color:var(--ink-soft); line-height:1.55;}
@@ -444,6 +460,15 @@
           </section>
 
           <section>
+            <h2 class="eyebrow">Consultas médicas</h2>
+            <div class="appts" id="appts"></div>
+            <button type="button" class="add-block-btn" id="add-appt">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+              Adicionar consulta
+            </button>
+          </section>
+
+          <section>
             <div class="info-card">
               <div class="legend-grid" id="legend"></div>
             </div>
@@ -492,6 +517,7 @@
   var STORE_THEME = "remedios-theme";
   var STORE_ALARM = "remedios-alarm-settings";
   var STORE_HISTORY = "remedios-history";
+  var STORE_APPTS = "remedios-appts";
 
   var ICON_KEYS = ["dawn","morning","afternoon","dusk","night"];
   var ICON_NAMES = {dawn:"Nascer do sol",morning:"Sol / manhã",afternoon:"Prato / almoço",dusk:"Pôr do sol",night:"Lua / noite"};
@@ -515,7 +541,7 @@
   // ---------- state ----------
   var SCHEDULE, ALARM, editMode=false;
   var lastBlocksSig=null, lastHeroLabel=null, lastMetaSig=null;
-  var audioCtx=null, alarmLoop=null, activeAlarmBlock=null, pendingAlarms=[], alarmPrevFocus=null;
+  var audioCtx=null, alarmLoop=null, activeAlarmBlock=null, pendingAlarms=[], alarmPrevFocus=null, activeAppt=null;
 
   function load(key, fb){ try{ var v=localStorage.getItem(key); return v?JSON.parse(v):fb; }catch(e){ return fb; } }
   function save(key, val){ try{ localStorage.setItem(key, JSON.stringify(val)); }catch(e){} }
@@ -675,6 +701,9 @@
       li.innerHTML="<b>"+esc(it.nome)+"</b>"+(it.qtd?" — "+esc(it.qtd):"")+(it.obs?'<br><span style="opacity:.85;font-size:.88em">'+esc(it.obs)+"</span>":"");
       ul.appendChild(li);
     });
+    document.getElementById("alarm-taken").textContent="✓ Tomei — marcar como dado";
+    document.getElementById("alarm-snooze").textContent="Soneca ("+(ALARM.snoozeMin||10)+" min)";
+    document.getElementById("alarm-stop").textContent="Parar o som";
     ov.classList.add("show");
     ov.setAttribute("aria-modal","true");
     if(!prefersReduced()) ov.classList.add("buzz");
@@ -697,7 +726,7 @@
     stopAlarmSound();
     var ov=document.getElementById("alarm-overlay");
     ov.classList.remove("show"); ov.classList.remove("buzz"); ov.removeAttribute("aria-modal");
-    activeAlarmBlock=null;
+    activeAlarmBlock=null; activeAppt=null;
     if(alarmPrevFocus&&alarmPrevFocus.focus){ try{ alarmPrevFocus.focus(); }catch(e){} }
     setTimeout(drainQueue,300);
   }
@@ -1085,6 +1114,23 @@
       L.push("END:VALARM");
       L.push("END:VEVENT");
     });
+    // consultas médicas: evento único com 2 alarmes (24h antes + 19h da véspera)
+    loadAppts().forEach(function(a){
+      var ts=apptTimestamp(a); if(!ts) return;
+      var tt=(a.time.length===4?"0"+a.time:a.time);
+      var dt=a.date.replace(/-/g,"")+"T"+tt.replace(":","")+"00";
+      L.push("BEGIN:VEVENT");
+      L.push("UID:consulta-"+a.id+"@friday-remedios");
+      L.push("DTSTAMP:"+y+mo+da+"T000000Z");
+      L.push(fold("DTSTART:"+dt));
+      L.push(fold("SUMMARY:"+icsEscape("Consulta médica"+(a.title?": "+a.title:""))));
+      if(a.local) L.push(fold("DESCRIPTION:"+icsEscape(a.local)));
+      L.push("BEGIN:VALARM"); L.push("ACTION:DISPLAY"); L.push(fold("DESCRIPTION:"+icsEscape("Consulta médica em 24h"+(a.title?": "+a.title:"")))); L.push("TRIGGER:-PT24H"); L.push("END:VALARM");
+      var eveTs=eveningBefore(a);
+      if(eveTs){ var mins=Math.max(1, Math.round((ts-eveTs)/60000)); var h=Math.floor(mins/60), m=mins%60;
+        L.push("BEGIN:VALARM"); L.push("ACTION:DISPLAY"); L.push(fold("DESCRIPTION:"+icsEscape("Prepare-se: consulta médica amanhã"+(a.title?" ("+a.title+")":"")))); L.push("TRIGGER:-PT"+h+"H"+m+"M"); L.push("END:VALARM"); }
+      L.push("END:VEVENT");
+    });
     L.push("END:VCALENDAR");
     return L.join("\r\n");
   }
@@ -1138,7 +1184,7 @@
       rows.push({date:day, blocks:dayBlocks, noSchedule: !sched});
     });
     var fromMs=new Date(fromStr+"T00:00:00").getTime(), toMs=new Date(toStr+"T23:59:59").getTime();
-    var changes = lg.filter(function(e){ return ["add","edit","del","import","restore"].indexOf(e.k)>=0 && e.t>=fromMs && e.t<=toMs; });
+    var changes = lg.filter(function(e){ return ["add","edit","del","import","restore","appt-add","appt-edit","appt-del"].indexOf(e.k)>=0 && e.t>=fromMs && e.t<=toMs; });
     return {rows:rows, changes:changes, totals:tot};
   }
   function buildReportHTML(rep, f, t){
@@ -1189,6 +1235,119 @@
     return L.join("\r\n");
   }
 
+  // ---------- CONSULTAS MEDICAS ----------
+  function loadAppts(){ var a=load(STORE_APPTS,[]); return Array.isArray(a)?a:[]; }
+  function saveAppts(a){ save(STORE_APPTS, a); }
+  function isDateStr(v){ return typeof v==="string" && /^\d{4}-\d{2}-\d{2}$/.test(v); }
+  function apptTimestamp(a){ if(!isDateStr(a.date)||!isHHMM(a.time)) return 0; var t=a.time.length===4?"0"+a.time:a.time; var d=new Date(a.date+"T"+t+":00"); return isNaN(d)?0:d.getTime(); }
+  function eveningBefore(a){ if(!isDateStr(a.date)) return 0; var d=new Date(a.date+"T19:00:00"); if(isNaN(d)) return 0; d.setDate(d.getDate()-1); return d.getTime(); }
+  function daysUntil(a){ if(!isDateStr(a.date)) return null; var d=new Date(a.date+"T00:00:00"), n=new Date(); n.setHours(0,0,0,0); return Math.round((d.getTime()-n.getTime())/86400000); }
+  function apptAckKey(id,k){ return "remedios-apptack-"+id+"-"+k; }
+  function isApptAcked(id,k){ try{ return localStorage.getItem(apptAckKey(id,k))==="1"; }catch(e){ return false; } }
+  function ackAppt(id,k){ try{ localStorage.setItem(apptAckKey(id,k),"1"); }catch(e){} }
+  function apptSnzKey(id,k){ return "remedios-apptsnz-"+id+"-"+k; }
+  function getApptSnz(id,k){ try{ var v=localStorage.getItem(apptSnzKey(id,k)); return v?+v:0; }catch(e){ return 0; } }
+  function setApptSnz(id,k,ts){ try{ if(ts) localStorage.setItem(apptSnzKey(id,k),String(ts)); else localStorage.removeItem(apptSnzKey(id,k)); }catch(e){} }
+
+  function checkApptReminders(){
+    if(!ALARM.enabled) return;
+    if(activeAlarmBlock || activeAppt) return;
+    var now=Date.now(), appts=loadAppts();
+    for(var i=0;i<appts.length;i++){
+      var a=appts[i], apptTs=apptTimestamp(a); if(!apptTs) continue;
+      if(now>=apptTs) continue; // consulta ja passou
+      var rems=[ {k:"24h", ts:apptTs-24*3600*1000}, {k:"eve", ts:eveningBefore(a)} ];
+      for(var j=0;j<rems.length;j++){
+        var rem=rems[j]; if(!rem.ts) continue;
+        if(isApptAcked(a.id, rem.k)) continue;
+        var snz=getApptSnz(a.id, rem.k);
+        if(snz){ if(now>=snz){ setApptSnz(a.id,rem.k,0); fireApptAlarm(a, rem.k); return; } else continue; }
+        if(now>=rem.ts && now<apptTs){ fireApptAlarm(a, rem.k); return; }
+      }
+    }
+  }
+  function fireApptAlarm(a, kind){
+    if(activeAlarmBlock || activeAppt) return;
+    activeAppt={a:a, kind:kind};
+    var ov=document.getElementById("alarm-overlay");
+    ov.style.setProperty("--alarm-color", "var(--accent)");
+    document.getElementById("alarm-time").textContent=a.time;
+    document.getElementById("alarm-title").textContent = kind==="eve" ? "CONSULTA MÉDICA AMANHÃ" : "CONSULTA MÉDICA EM 24 H";
+    var ul=document.getElementById("alarm-meds"); ul.innerHTML="";
+    var li=document.createElement("li");
+    li.innerHTML="<b>"+esc(a.title||"Consulta médica")+"</b><br><span style='opacity:.9'>"+fmtBR(a.date)+" às "+a.time+"</span>"+(a.local?"<br><span style='opacity:.85'>"+esc(a.local)+"</span>":"")+"<br><br>Fique preparado para a sua consulta médica.";
+    ul.appendChild(li);
+    document.getElementById("alarm-taken").textContent="OK, estou ciente";
+    document.getElementById("alarm-snooze").textContent="Lembrar em 1 hora";
+    document.getElementById("alarm-stop").textContent="Fechar";
+    ov.classList.add("show"); ov.setAttribute("aria-modal","true");
+    if(!prefersReduced()) ov.classList.add("buzz");
+    startAlarmSound();
+    notify("Consulta médica amanhã", (a.title||"Consulta")+" — "+fmtBR(a.date)+" às "+a.time, "appt-"+a.id+"-"+kind);
+    announce("Alerta de consulta médica: "+(a.title||"consulta")+" em "+fmtBR(a.date)+" às "+a.time+". Fique preparado.");
+    alarmPrevFocus=document.activeElement;
+    var tk=document.getElementById("alarm-taken"); if(tk) setTimeout(function(){ try{ tk.focus(); }catch(e){} },50);
+  }
+
+  function renderAppts(){
+    var wrap=document.getElementById("appts"); if(!wrap) return;
+    var appts=loadAppts().slice().sort(function(x,y){ return (x.date+x.time).localeCompare(y.date+y.time); });
+    var now=Date.now();
+    var upcoming=appts.filter(function(a){ var ts=apptTimestamp(a); return ts && ts >= now-12*3600*1000; });
+    wrap.innerHTML="";
+    if(!upcoming.length){ var e=el("p","appts-empty","Nenhuma consulta agendada. Toque em “Adicionar consulta”."); wrap.appendChild(e); return; }
+    upcoming.forEach(function(a){
+      var du=daysUntil(a);
+      var tag = du===0?"hoje":du===1?"amanhã":(du!=null&&du>1?("em "+du+" dias"):"");
+      var card=el("div","appt-card"+(du!=null&&du<=1?" soon":""));
+      card.innerHTML='<div class="appt-main"><div class="appt-title">'+esc(a.title||"Consulta médica")+'</div>'+
+        '<div class="appt-when">'+fmtBR(a.date)+' · '+a.time+(tag?' · <b>'+tag+'</b>':'')+'</div>'+
+        (a.local?'<div class="appt-local">'+esc(a.local)+'</div>':'')+'</div>';
+      var acts=el("div","appt-acts");
+      var eb=el("button","mini-btn","Editar"); eb.type="button"; eb.addEventListener("click",function(){ openApptEditor(a.id); });
+      var db=el("button","mini-btn danger","Apagar"); db.type="button"; db.addEventListener("click",function(){ confirmDeleteAppt(a.id); });
+      acts.appendChild(eb); acts.appendChild(db); card.appendChild(acts);
+      wrap.appendChild(card);
+    });
+  }
+  function openApptEditor(id){
+    var isNew=!id;
+    var a = isNew ? {id:"c"+Date.now(), date:"", time:"09:00", title:"", local:""}
+                  : JSON.parse(JSON.stringify(loadAppts().find(function(x){return x.id===id;}) || {id:"c"+Date.now(), date:"", time:"09:00", title:"", local:""}));
+    var form=el("div");
+    var f1=el("div","field"); f1.innerHTML='<div class="row2"><div><label>Data</label><input type="date" id="ap-date" value="'+esc(a.date)+'"></div><div><label>Hora</label><input type="time" id="ap-time" value="'+esc(a.time)+'"></div></div>'; form.appendChild(f1);
+    var f2=el("div","field"); f2.innerHTML='<label>Título / médico</label><input type="text" id="ap-title" value="'+esc(a.title)+'" placeholder="Ex.: Cardiologista">'; form.appendChild(f2);
+    var f3=el("div","field"); f3.innerHTML='<label>Local / observação (opcional)</label><input type="text" id="ap-local" value="'+esc(a.local)+'" placeholder="Ex.: Hospital X, sala 3 — levar exames">'; form.appendChild(f3);
+    form.appendChild(el("p","helper","Você receberá 2 avisos: <strong>24 horas antes</strong> e <strong>às 19h da véspera</strong> (“prepare-se para a consulta amanhã”). Baixe o calendário no menu Mais para os avisos tocarem também com o app fechado."));
+    var actions=el("div","modal-actions");
+    var saveBtn=el("button","btn btn-primary","Salvar"); saveBtn.type="button";
+    var cancelBtn=el("button","btn btn-ghost","Cancelar"); cancelBtn.type="button"; cancelBtn.addEventListener("click",closeModal);
+    saveBtn.addEventListener("click",function(){
+      var date=form.querySelector("#ap-date").value, time=form.querySelector("#ap-time").value||"09:00";
+      if(!isDateStr(date)){ toast("Escolha a data da consulta."); return; }
+      a.date=date; a.time=time; a.title=form.querySelector("#ap-title").value.trim(); a.local=form.querySelector("#ap-local").value.trim();
+      // ao mudar data/hora, limpar acks/snoozes antigos para os avisos voltarem a valer
+      ["24h","eve"].forEach(function(k){ try{ localStorage.removeItem(apptAckKey(a.id,k)); localStorage.removeItem(apptSnzKey(a.id,k)); }catch(e){} });
+      var appts=loadAppts();
+      if(isNew){ appts.push(a); logEvent("appt-add", null, "Consulta adicionada: "+(a.title||"consulta")+" em "+fmtBR(a.date)+" "+a.time); }
+      else { var idx=appts.findIndex(function(x){return x.id===a.id;}); if(idx<0){ appts.push(a); } else appts[idx]=a; logEvent("appt-edit", null, "Consulta alterada: "+(a.title||"consulta")+" para "+fmtBR(a.date)+" "+a.time); }
+      saveAppts(appts); renderAppts(); closeModal(); toast(isNew?"Consulta adicionada.":"Consulta atualizada.");
+    });
+    actions.appendChild(saveBtn); actions.appendChild(cancelBtn); form.appendChild(actions);
+    openModal(isNew?"Nova consulta":"Editar consulta", form);
+  }
+  function confirmDeleteAppt(id){
+    var a=loadAppts().find(function(x){return x.id===id;}); if(!a) return;
+    var c=el("div");
+    c.appendChild(el("p","helper","Apagar a consulta <strong>"+esc(a.title||"médica")+"</strong> de "+fmtBR(a.date)+" às "+a.time+"?"));
+    var actions=el("div","modal-actions");
+    var del=el("button","btn btn-danger","Apagar"); del.type="button";
+    var cancel=el("button","btn btn-ghost","Cancelar"); cancel.type="button"; cancel.addEventListener("click",closeModal);
+    del.addEventListener("click",function(){ var appts=loadAppts().filter(function(x){return x.id!==id;}); saveAppts(appts); logEvent("appt-del", null, "Consulta apagada: "+(a.title||"consulta")+" de "+fmtBR(a.date)); renderAppts(); closeModal(); toast("Consulta apagada."); });
+    actions.appendChild(del); actions.appendChild(cancel); c.appendChild(actions);
+    openModal("Apagar consulta", c);
+  }
+
   // ---------- config export/import ----------
   function exportConfig(){ downloadBlob(JSON.stringify(SCHEDULE,null,2),"remedios-lista.json","application/json"); toast("Lista exportada."); }
   function importConfig(){
@@ -1230,9 +1389,9 @@
   }
 
   // ---------- full render ----------
-  function fullRender(){ var n=nowMin(); renderHero(n); renderProgress(); renderBlocks(n); }
+  function fullRender(){ var n=nowMin(); renderHero(n); renderProgress(); renderBlocks(n); renderAppts(); }
   function tick(){ setText(document.getElementById("clock"),fmtClock()); setText(document.getElementById("dateline"),fmtDate());
-    fullRender(); checkAlarms(); }
+    fullRender(); checkAlarms(); checkApptReminders(); }
 
   // ---------- SW (only works when hosted; harmless elsewhere) ----------
   function registerSW(){ if("serviceWorker" in navigator){ try{ navigator.serviceWorker.register("sw.js").catch(function(){}); }catch(e){} } }
@@ -1250,10 +1409,17 @@
     document.getElementById("btn-tools").addEventListener("click",openTools);
     document.getElementById("btn-alarms").addEventListener("click",function(){ if(ALARM.enabled){ openTools(); } else { enableAlarms(); } });
     document.getElementById("add-block").addEventListener("click",function(){ openBlockEditor(null); });
+    document.getElementById("add-appt").addEventListener("click",function(){ openApptEditor(null); });
 
-    document.getElementById("alarm-taken").addEventListener("click",function(){ if(activeAlarmBlock){ var b=activeAlarmBlock; setDone(b.id,true); setAck(b); logEvent("take", b, "", {td: targetDateFor(b)}); closeAlarm(); lastBlocksSig=null; fullRender(); toast("Marcado como dado."); } });
-    document.getElementById("alarm-snooze").addEventListener("click",function(){ if(activeAlarmBlock){ var b=activeAlarmBlock; setSnz(b, Date.now()+(ALARM.snoozeMin||10)*60000); closeAlarm(); toast("Soneca de "+(ALARM.snoozeMin||10)+" min."); } });
-    document.getElementById("alarm-stop").addEventListener("click",function(){ if(activeAlarmBlock){ setAck(activeAlarmBlock); } closeAlarm(); });
+    document.getElementById("alarm-taken").addEventListener("click",function(){
+      if(activeAppt){ ackAppt(activeAppt.a.id, activeAppt.kind); closeAlarm(); toast("Ciente da consulta."); return; }
+      if(activeAlarmBlock){ var b=activeAlarmBlock; setDone(b.id,true); setAck(b); logEvent("take", b, "", {td: targetDateFor(b)}); closeAlarm(); lastBlocksSig=null; fullRender(); toast("Marcado como dado."); } });
+    document.getElementById("alarm-snooze").addEventListener("click",function(){
+      if(activeAppt){ setApptSnz(activeAppt.a.id, activeAppt.kind, Date.now()+60*60000); closeAlarm(); toast("Vou lembrar em 1 hora."); return; }
+      if(activeAlarmBlock){ var b=activeAlarmBlock; setSnz(b, Date.now()+(ALARM.snoozeMin||10)*60000); closeAlarm(); toast("Soneca de "+(ALARM.snoozeMin||10)+" min."); } });
+    document.getElementById("alarm-stop").addEventListener("click",function(){
+      if(activeAppt){ ackAppt(activeAppt.a.id, activeAppt.kind); closeAlarm(); return; }
+      if(activeAlarmBlock){ setAck(activeAlarmBlock); } closeAlarm(); });
     document.getElementById("alarm-overlay").addEventListener("keydown",function(e){
       if(e.key!=="Tab") return;
       var f=[document.getElementById("alarm-taken"),document.getElementById("alarm-snooze"),document.getElementById("alarm-stop")];
