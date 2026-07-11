@@ -658,6 +658,14 @@
     if(audioCtx && audioCtx.state==="suspended"){ audioCtx.resume(); }
     return audioCtx;
   }
+  // Destrava o áudio no iOS/Android: precisa acontecer DENTRO de um toque e ESPERAR o resume
+  function unlockAudio(){
+    var ctx=ensureAudio();
+    if(!ctx) return Promise.resolve(null);
+    function silentPing(){ try{ var b=ctx.createBuffer(1,1,22050), s=ctx.createBufferSource(); s.buffer=b; s.connect(ctx.destination); s.start(0); }catch(e){} }
+    if(ctx.state==="suspended"){ return ctx.resume().then(function(){ silentPing(); return ctx; }).catch(function(){ return ctx; }); }
+    silentPing(); return Promise.resolve(ctx);
+  }
   function beep(freqs, dur, type, gain){
     var ctx=ensureAudio(); if(!ctx) return;
     var t0=ctx.currentTime;
@@ -1029,6 +1037,7 @@
 
     // alarm settings
     c.appendChild(el("div","field","<label>Som do alarme (gerado, funciona offline)</label>"));
+    c.appendChild(el("p","helper","<strong>Não sai som no iPhone?</strong> Verifique: (1) o interruptor lateral do iPhone fora do silencioso (sem a listra laranja); (2) o volume alto; (3) toque em “ouvir” uma vez para <strong>liberar o áudio</strong> (o iPhone bloqueia som automático até o primeiro toque)."));
     var radios=el("div","radio-list");
     Object.keys(SOUNDS).forEach(function(k){
       var item=el("label","radio-item"+(ALARM.sound===k?" sel":""));
@@ -1038,7 +1047,7 @@
     c.appendChild(radios);
     radios.addEventListener("click",function(e){
       var play=e.target.getAttribute("data-play");
-      if(play){ e.preventDefault(); ensureAudio(); SOUNDS[play].play(); return; }
+      if(play){ e.preventDefault(); toast("Tocando…"); unlockAudio().then(function(){ SOUNDS[play].play(); setTimeout(function(){ SOUNDS[play].play(); },260); }); return; }
     });
     radios.addEventListener("change",function(e){ if(e.target.name==="snd"){ ALARM.sound=e.target.value; save(STORE_ALARM,ALARM);
       radios.querySelectorAll(".radio-item").forEach(function(it){ it.classList.toggle("sel", it.querySelector("input").checked); }); } });
@@ -1382,9 +1391,7 @@
 
   // ---------- alarms enable ----------
   function enableAlarms(){
-    ensureAudio();
-    // unlock with a near-silent blip
-    try{ beep([440],0.05,"sine",0.001); }catch(e){}
+    unlockAudio().then(function(){ try{ beep([880,660],0.25,"sine",0.5); }catch(e){} });  // toque de confirmação já destrava o áudio
     ALARM.enabled=true; save(STORE_ALARM,ALARM);
     var btn=document.getElementById("btn-alarms");
     btn.classList.add("alarm-on"); btn.setAttribute("aria-pressed","true");
