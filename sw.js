@@ -1,6 +1,6 @@
 /* Service Worker — Remédios do Pai (PWA offline).
    Cache-first para o app shell, para funcionar sem internet. */
-const CACHE = "remedios-v2";
+const CACHE = "remedios-v3";
 const ASSETS = [
   "./",
   "./index.html",
@@ -67,9 +67,10 @@ self.addEventListener("push", (e) => {
       body: data.body,
       icon: "./icons/icon-192.png",
       badge: "./icons/icon-192.png",
-      vibrate: [400, 200, 400],
+      vibrate: [500, 200, 500, 200, 500],
       tag: data.tag || "remedio",
-      renotify: true
+      renotify: true,
+      requireInteraction: true
     })
   );
 });
